@@ -1188,7 +1188,7 @@ class Element[widget_type: tk.Widget](ABC):
         self._toplevel_form: Window = None
         self.parent_frame: tk.BaseWidget = None
         self.parent_form: Container | None = None
-        self.parent_form_for_buttons: Window = None
+        self._toplevel_form: Window = None
         self.text_input_default = None
         self._background_color = background_color
         self._text_color = text_color
@@ -1335,11 +1335,11 @@ class Element[widget_type: tk.Widget](ABC):
 
         """
         if self._popup_menu_location == (None, None):
-            winx, winy = self.parent_form_for_buttons.current_location()
+            winx, winy = self._toplevel_form.current_location()
         else:
             winx, winy = self._popup_menu_location
         # self.ParentForm.TKroot.update()
-        self.parent_form_for_buttons.tk_root.tk.call('wm', 'geometry', menu, f"+{winx}+{winy}")
+        self._toplevel_form.tk_root.tk.call('wm', 'geometry', menu, f"+{winx}+{winy}")
 
     def _menu_item_chosen_callback(self, item_chosen:str):  # TEXT Menu item callback
         """
@@ -1349,9 +1349,9 @@ class Element[widget_type: tk.Widget](ABC):
         :type item_chosen:  str
         """
         self.menu_item_chosen = item_chosen
-        self.parent_form_for_buttons.last_button_clicked = self.menu_item_chosen
-        self.parent_form_for_buttons.form_remained_open = True
-        _exit_mainloop(self.parent_form_for_buttons)
+        self._toplevel_form.last_event_key = self.menu_item_chosen
+        self._toplevel_form.form_remained_open = True
+        _exit_mainloop(self._toplevel_form)
         # Window._window_that_exited = self.ParentForm
         # self.ParentForm.TKroot.quit()  # kick the users out of the mainloop
 
@@ -1389,7 +1389,7 @@ class Element[widget_type: tk.Widget](ABC):
         """
         # If this is a minimize button for a custom titlebar, then minimize the window
         if self._key in (TITLEBAR_MINIMIZE_KEY, TITLEBAR_MAXIMIZE_KEY, TITLEBAR_CLOSE_KEY):
-            self.parent_form_for_buttons._custom_titlebar_callback(self._key)
+            self._toplevel_form._custom_titlebar_callback(self._key)
         self._generic_callback_handler(self.display_text)
 
     def _return_key_handler(self, event):
@@ -1406,13 +1406,15 @@ class Element[widget_type: tk.Widget](ABC):
         if self.disabled:
             return
 
-        my_form = self.parent_form_for_buttons
+        my_form = self._toplevel_form
         button_element = self._find_return_key_bound_button(my_form)
         if button_element is not None:
             # if the Button has been disabled, then don't perform the callback
             if button_element.disabled:
                 return
             button_element._button_call_back()
+    
+    
 
     def _generic_callback_handler(self, alternative_to_key=None, force_key_to_be=None):
         """
@@ -1426,66 +1428,24 @@ class Element[widget_type: tk.Widget](ABC):
         :type alternate_to_key:  Any
         """
         if force_key_to_be is not None:
-            button_key = force_key_to_be
+            event_key = force_key_to_be
         elif self._key is not None:
-            button_key = self._key
+            event_key = self._key
         else:
-            button_key = alternative_to_key
+            event_key = alternative_to_key
         
-        self.parent_form_for_buttons.last_button_clicked = button_key
-        self.parent_form_for_buttons.form_remained_open = True
+        self._toplevel_form.last_event_key = event_key
+        self._toplevel_form.form_remained_open = True
 
-        _exit_mainloop(self.parent_form_for_buttons)
+        _exit_mainloop(self._toplevel_form)
 
-    def _listbox_select_handler(self, event):
+    def _generic_tkinter_callback_handler(self, event):
         """
-        Internal callback function for when a listbox item is selected.
+        Internal callback function for default callbacks.
 
         :param event: Information from tkinter about the callback
         :type event:
 
-        """
-        self._generic_callback_handler('')
-
-    def _combobox_select_handler(self, event):
-        """
-        Internal callback function for when an entry is selected in a Combobox.
-
-        :param event: Event data from tkinter (not used)
-        :type event:
-
-        """
-        self._generic_callback_handler('')
-
-    def _spinbox_select_handler(self, event=None):
-        """
-        Internal callback function for when an entry is selected in a Spinbox.
-
-        Note that the parm is optional because it's not used if arrows are used to change the value
-        but if the return key is pressed, it will include the event parm
-        :param event: Event data passed in by tkinter (not used)
-        :type event:
-        """
-        self._generic_callback_handler('')
-
-    def _radio_handler(self):
-        """
-        Internal callback for when a radio button is selected and enable events was set for radio.
-        """
-        self._generic_callback_handler('')
-
-    def _checkbox_handler(self):
-        """
-        Internal callback for when a checkbnox is selected and enable events was set for checkbox.
-        """
-        self._generic_callback_handler('')
-
-    def _tab_group_select_handler(self, event):
-        """
-        Internal callback for when a Tab is selected and enable events was set for TabGroup.
-
-        :param event: Event data passed in by tkinter (not used)
-        :type event:
         """
         self._generic_callback_handler('')
 
@@ -1502,18 +1462,9 @@ class Element[widget_type: tk.Widget](ABC):
             return
         self._generic_callback_handler('')
 
-    def _click_handler(self, event):
-        """
-        Internal callback for when a mouse was clicked... I think.
-
-        :param event: Event data passed in by tkinter (not used)
-        :type event:
-        """
-        self._generic_callback_handler('')
-
     def _this_elements_window_closed(self, *, quick_check=True):
-        if self.parent_form_for_buttons is not None:
-            return self.parent_form_for_buttons.is_closed(quick_check=quick_check)
+        if self._toplevel_form is not None:
+            return self._toplevel_form.is_closed(quick_check=quick_check)
 
         return True
 
@@ -1618,7 +1569,7 @@ class Element[widget_type: tk.Widget](ABC):
         :type block:  bool
         """
         try:
-            self.parent_form_for_buttons.tk_root.focus_force()
+            self._toplevel_form.tk_root.focus_force()
             if block:
                 self.widget.configure(takefocus=0)
             else:
@@ -1636,7 +1587,7 @@ class Element[widget_type: tk.Widget](ABC):
         """
         try:
             next_widget_focus = self.widget.tk_focusNext()
-            return self.parent_form_for_buttons.widget_to_element(next_widget_focus)
+            return self._toplevel_form.widget_to_element(next_widget_focus)
         except Exception as e:
             _error_popup_with_traceback("Exception getting next focus. Check your element's Widget", e)
 
@@ -1650,7 +1601,7 @@ class Element[widget_type: tk.Widget](ABC):
         """
         try:
             next_widget_focus = self.widget.tk_focusPrev()      # tkinter._widget
-            return self.parent_form_for_buttons.widget_to_element(next_widget_focus)
+            return self._toplevel_form.widget_to_element(next_widget_focus)
         except Exception as e:
             _error_popup_with_traceback("Exception getting previous focus. Check your element's Widget", e)
 
@@ -1826,18 +1777,18 @@ class Element[widget_type: tk.Widget](ABC):
         Turns on Grab Anywhere functionality AFTER a window has been created.  Don't try on a window that's not yet
         been Finalized or Read.
         """
-        self.widget.bind("<Control-Button-1>", self.parent_form_for_buttons._start_move)
-        self.widget.bind("<Control-ButtonRelease-1>", self.parent_form_for_buttons._stop_move)
-        self.widget.bind("<Control-B1-Motion>", self.parent_form_for_buttons._on_motion)
+        self.widget.bind("<Control-Button-1>", self._toplevel_form._start_move)
+        self.widget.bind("<Control-ButtonRelease-1>", self._toplevel_form._stop_move)
+        self.widget.bind("<Control-B1-Motion>", self._toplevel_form._on_motion)
 
     def _grab_anywhere_on(self):
         """
         Turns on Grab Anywhere functionality AFTER a window has been created.  Don't try on a window that's not yet
         been Finalized or Read.
         """
-        self.widget.bind("<ButtonPress-1>", self.parent_form_for_buttons._start_move)
-        self.widget.bind("<ButtonRelease-1>", self.parent_form_for_buttons._stop_move)
-        self.widget.bind("<B1-Motion>", self.parent_form_for_buttons._on_motion)
+        self.widget.bind("<ButtonPress-1>", self._toplevel_form._start_move)
+        self.widget.bind("<ButtonRelease-1>", self._toplevel_form._stop_move)
+        self.widget.bind("<B1-Motion>", self._toplevel_form._on_motion)
 
     def _grab_anywhere_off(self):
         """
@@ -1853,47 +1804,47 @@ class Element[widget_type: tk.Widget](ABC):
         Excludes this element from being used by the grab_anywhere feature
         Handy for elements like a Graph element when dragging is enabled. You want the Graph element to get the drag events instead of the window dragging.
         """
-        self.parent_form_for_buttons._grab_anywhere_ignore_these_list.append(self.widget)
+        self._toplevel_form._grab_anywhere_ignore_these_list.append(self.widget)
 
     def grab_anywhere_include(self):
         """
         Includes this element in the grab_anywhere feature
         This will allow you to make a Multline element drag a window for example
         """
-        self.parent_form_for_buttons._grab_anywhere_include_these_list.append(self.widget)
+        self._toplevel_form._grab_anywhere_include_these_list.append(self.widget)
 
     def set_right_click_menu(self, menu=None):
         if menu == Menu.RIGHT_CLICK_DISABLED:
             return
         if menu is None:
-            menu = self.parent_form_for_buttons.right_click_menu
+            menu = self._toplevel_form.right_click_menu
             if menu is None:
                 return
         if menu:
-            top_menu = tk.Menu(self.parent_form_for_buttons.tk_root, tearoff=self.parent_form_for_buttons.right_click_menu_tearoff, tearoffcommand=self._tearoff_menu_callback)
+            top_menu = tk.Menu(self._toplevel_form.tk_root, tearoff=self._toplevel_form.right_click_menu_tearoff, tearoffcommand=self._tearoff_menu_callback)
 
-            if self.parent_form_for_buttons.right_click_menu_background_color not in (COLOR_SYSTEM_DEFAULT, None):
-                top_menu.config(bg=self.parent_form_for_buttons.right_click_menu_background_color)
-            if self.parent_form_for_buttons.right_click_menu_text_color not in (COLOR_SYSTEM_DEFAULT, None):
-                top_menu.config(fg=self.parent_form_for_buttons.right_click_menu_text_color)
-            if self.parent_form_for_buttons.right_click_menu_disabled_text_color not in (COLOR_SYSTEM_DEFAULT, None):
-                top_menu.config(disabledforeground=self.parent_form_for_buttons.right_click_menu_disabled_text_color)
-            if self.parent_form_for_buttons.right_click_menu_font is not None:
-                top_menu.config(font=self.parent_form_for_buttons.right_click_menu_font)
+            if self._toplevel_form.right_click_menu_background_color not in (COLOR_SYSTEM_DEFAULT, None):
+                top_menu.config(bg=self._toplevel_form.right_click_menu_background_color)
+            if self._toplevel_form.right_click_menu_text_color not in (COLOR_SYSTEM_DEFAULT, None):
+                top_menu.config(fg=self._toplevel_form.right_click_menu_text_color)
+            if self._toplevel_form.right_click_menu_disabled_text_color not in (COLOR_SYSTEM_DEFAULT, None):
+                top_menu.config(disabledforeground=self._toplevel_form.right_click_menu_disabled_text_color)
+            if self._toplevel_form.right_click_menu_font is not None:
+                top_menu.config(font=self._toplevel_form.right_click_menu_font)
 
-            if self.parent_form_for_buttons.right_click_menu_selected_colors[0] not in (COLOR_SYSTEM_DEFAULT, None):
-                top_menu.config(activeforeground=self.parent_form_for_buttons.right_click_menu_selected_colors[0])
-            if self.parent_form_for_buttons.right_click_menu_selected_colors[1] not in (COLOR_SYSTEM_DEFAULT, None):
-                top_menu.config(activebackground=self.parent_form_for_buttons.right_click_menu_selected_colors[1])
-            add_menu_item(top_menu=top_menu, sub_menu_info=menu[1], element=self, right_click_menu=True)
+            if self._toplevel_form.right_click_menu_selected_colors[0] not in (COLOR_SYSTEM_DEFAULT, None):
+                top_menu.config(activeforeground=self._toplevel_form.right_click_menu_selected_colors[0])
+            if self._toplevel_form.right_click_menu_selected_colors[1] not in (COLOR_SYSTEM_DEFAULT, None):
+                top_menu.config(activebackground=self._toplevel_form.right_click_menu_selected_colors[1])
+            _add_menu_item(top_menu=top_menu, sub_menu_info=menu[1], element=self, right_click_menu=True)
             self.tk_right_click_menu = top_menu
-            if self.parent_form_for_buttons.right_click_menu:            # if the top level has a right click menu, then setup a callback for the Window itself
-                if self.parent_form_for_buttons.tk_right_click_menu is None:
-                    self.parent_form_for_buttons.tk_right_click_menu = top_menu
+            if self._toplevel_form.right_click_menu:            # if the top level has a right click menu, then setup a callback for the Window itself
+                if self._toplevel_form.tk_right_click_menu is None:
+                    self._toplevel_form.tk_right_click_menu = top_menu
                     if running_mac:
-                        self.parent_form_for_buttons.tk_root.bind('<ButtonRelease-2>', self.parent_form_for_buttons._right_click_menu_callback)
+                        self._toplevel_form.tk_root.bind('<ButtonRelease-2>', self._toplevel_form._right_click_menu_callback)
                     else:
-                        self.parent_form_for_buttons.tk_root.bind('<ButtonRelease-3>', self.parent_form_for_buttons._right_click_menu_callback)
+                        self._toplevel_form.tk_root.bind('<ButtonRelease-3>', self._toplevel_form._right_click_menu_callback)
             if running_mac:
                 self.widget.bind('<ButtonRelease-2>', self._right_click_menu_callback)
             else:
@@ -2081,7 +2032,7 @@ class Element[widget_type: tk.Widget](ABC):
     
     @property
     def pad(self):
-        return self._pad if self._pad is not None else self.parent_form_for_buttons.element_padding
+        return self._pad if self._pad is not None else self._toplevel_form.element_padding
 
     @property
     def auto_size_text(self):
@@ -2091,8 +2042,8 @@ class Element[widget_type: tk.Widget](ABC):
         if self._auto_size_text is not None:
             return self._auto_size_text
         
-        if self.parent_form_for_buttons.auto_size_text is not None:
-            return self.parent_form_for_buttons.auto_size_text
+        if self._toplevel_form.auto_size_text is not None:
+            return self._toplevel_form.auto_size_text
         
         return DEFAULTS.AUTOSIZE_TEXT
 
@@ -2409,41 +2360,43 @@ class Element[widget_type: tk.Widget](ABC):
         else:
             menu = self.right_click_menu or self.parent_form.right_click_menu or self._toplevel_form.right_click_menu
 
-        if menu:
-            top_menu = tk.Menu(self._toplevel_form.tk_root, tearoff=self._toplevel_form.right_click_menu_tearoff, tearoffcommand=self._tearoff_menu_callback)
-
-            if self._toplevel_form.right_click_menu_background_color not in (COLOR_SYSTEM_DEFAULT, None):
-                top_menu.config(bg=self._toplevel_form.right_click_menu_background_color)
-            if self._toplevel_form.right_click_menu_text_color not in (COLOR_SYSTEM_DEFAULT, None):
-                top_menu.config(fg=self._toplevel_form.right_click_menu_text_color)
-            if self._toplevel_form.right_click_menu_disabled_text_color not in (COLOR_SYSTEM_DEFAULT, None):
-                top_menu.config(disabledforeground=self._toplevel_form.right_click_menu_disabled_text_color)
-            if self._toplevel_form.right_click_menu_font is not None:
-                top_menu.config(font=self._toplevel_form.right_click_menu_font)
-
-            if self._toplevel_form.right_click_menu_selected_colors[0] not in (COLOR_SYSTEM_DEFAULT, None):
-                top_menu.config(activeforeground=self._toplevel_form.right_click_menu_selected_colors[0])
-            if self._toplevel_form.right_click_menu_selected_colors[1] not in (COLOR_SYSTEM_DEFAULT, None):
-                top_menu.config(activebackground=self._toplevel_form.right_click_menu_selected_colors[1])
-            add_menu_item(top_menu=top_menu, sub_menu_info=menu[1], element=self, right_click_menu=True)
-            self.tk_right_click_menu = top_menu
-            if self._toplevel_form.right_click_menu:            # if the top level has a right click menu, then setup a callback for the Window itself
-                if self._toplevel_form.tk_right_click_menu is None:
-                    self._toplevel_form.tk_right_click_menu = top_menu
-                    if running_mac:
-                        self._toplevel_form.tk_root.bind('<ButtonRelease-2>', self._toplevel_form._right_click_menu_callback)
-                    else:
-                        self._toplevel_form.tk_root.bind('<ButtonRelease-3>', self._toplevel_form._right_click_menu_callback)
-            if running_mac:
-                self._widget.bind('<ButtonRelease-2>', self._right_click_menu_callback)
-            else:
-                self._widget.bind('<ButtonRelease-3>', self._right_click_menu_callback)
-                try:
-                    if isinstance(self, Column):
-                        self._widget.canvas.bind('<ButtonRelease-3>', self._right_click_menu_callback)
-                except Exception:
-                    pass
         self._add_grab()
+        if not menu:
+            return
+        
+        menu_dict = {
+            'bg': self._toplevel_form.right_click_menu_background_color,
+            'fg': self._toplevel_form.right_click_menu_text_color,
+            'disabledforeground': self._toplevel_form.right_click_menu_disabled_text_color,
+            'font': self._toplevel_form.right_click_menu_font,
+            'activeforeground': self._toplevel_form.right_click_menu_selected_colors[0],
+            'activebackground': self._toplevel_form.right_click_menu_selected_colors[1]
+        }
+        menu_dict = {key: val for key, val in menu_dict.items() if val not in (COLOR_SYSTEM_DEFAULT, None)}
+        top_menu = tk.Menu(
+            master=self._toplevel_form.tk_root,
+            cnf=menu_dict,
+            tearoff=self._toplevel_form.right_click_menu_tearoff,
+            tearoffcommand=self._tearoff_menu_callback
+        )
+        _add_menu_item(top_menu=top_menu, sub_menu_info=menu[1], element=self, right_click_menu=True)
+        self.tk_right_click_menu = top_menu
+        if self._toplevel_form.right_click_menu:            # if the top level has a right click menu, then setup a callback for the Window itself
+            if self._toplevel_form.tk_right_click_menu is None:
+                self._toplevel_form.tk_right_click_menu = top_menu
+                if running_mac:
+                    self._toplevel_form.tk_root.bind('<ButtonRelease-2>', self._toplevel_form._right_click_menu_callback)
+                else:
+                    self._toplevel_form.tk_root.bind('<ButtonRelease-3>', self._toplevel_form._right_click_menu_callback)
+        if running_mac:
+            self._widget.bind('<ButtonRelease-2>', self._right_click_menu_callback)
+        else:
+            self._widget.bind('<ButtonRelease-3>', self._right_click_menu_callback)
+            try:
+                if isinstance(self, Column):
+                    self._widget.canvas.bind('<ButtonRelease-3>', self._right_click_menu_callback)
+            except Exception:
+                pass
 
     def _add_grab(self):
         try:
@@ -2575,7 +2528,6 @@ class Container(ABCWholeMro):
             for element in row:
                 element.parent_frame = containing_frame
                 element.tk_parent_frame = tk_row_frame if use_row_frames else element.parent_frame
-                element.parent_form_for_buttons = toplevel_form  # save the button's parent form object
                 element._toplevel_form = toplevel_form
                 element.pack()
                 element._widget.key = element._key
@@ -3327,9 +3279,9 @@ class Combo(_InputElementReadonlyable[ttk.Combobox]):
         self._widget.bind("<Leave>", lambda event, em=self: self.test_mouse_unhook2(em))
 
         if self.enable_events:
-            self._widget.bind('<<ComboboxSelected>>', self._combobox_select_handler)
+            self._widget.bind('<<ComboboxSelected>>', self._generic_tkinter_callback_handler)
         if self.bind_return_key:
-            self._widget.bind('<Return>', self._combobox_select_handler)
+            self._widget.bind('<Return>', self._generic_tkinter_callback_handler)
         if self.enable_per_char_events:
             self._widget.bind('<Key>', self._keyboard_handler)
         
@@ -3443,12 +3395,12 @@ class OptionMenu(_InputElement[tk.OptionMenu]):
         self.tk_string_var = tk.StringVar()
         if self.default_value:
             self.tk_string_var.set(self.default_value)
-        command = self._combobox_select_handler if self.enable_events else (lambda *args, **kwargs: None)
+        command_dict = {'command': self._generic_tkinter_callback_handler} if self.enable_events else {}
         self._widget = tk.OptionMenu(
             self.tk_parent_frame,
             self.tk_string_var,
             *self.values,
-            command=command
+            **command_dict
         )  # need to set command here since it cannot be changed via configure()
 
     @override
@@ -3755,11 +3707,11 @@ class Listbox(_InputElement[tk.Listbox]):
     @override
     def _set_default_binds(self):
         if self.enable_events:
-            self._widget.bind('<<ListboxSelect>>', self._listbox_select_handler)
+            self._widget.bind('<<ListboxSelect>>', self._generic_tkinter_callback_handler)
 
         if self.bind_return_key:
-            self._widget.bind('<Return>', self._listbox_select_handler)
-            self._widget.bind('<Double-Button-1>', self._listbox_select_handler)
+            self._widget.bind('<Return>', self._generic_tkinter_callback_handler)
+            self._widget.bind('<Double-Button-1>', self._generic_tkinter_callback_handler)
 
     # old stuff, can delete? (commented out before refactor)
         # if not self.NoScrollbar or self.HorizontalScroll:
@@ -3985,7 +3937,7 @@ class Radio(Element[tk.Radiobutton]):
         res = {}
 
         if self.enable_events:
-            res['command'] = self._radio_handler
+            res['command'] = self._generic_tkinter_callback_handler
         if self.background_color not in {None, COLOR_SYSTEM_DEFAULT}:
             res['background'] = self.background_color
             res['selectcolor'] = self.circle_background_color
@@ -4167,7 +4119,7 @@ class Checkbox(Element[tk.Checkbutton]):
     @override
     def _modify_config_dict(self, config_dict):
         if self.enable_events:
-            config_dict['command'] = self._checkbox_handler
+            config_dict['command'] = self._generic_tkinter_callback_handler
         if self.background_color is not None and self.background_color != COLOR_SYSTEM_DEFAULT:
             config_dict['selectcolor'] = self.checkbox_background_color  # The background of the checkbox
             config_dict['activebackground'] = self.background_color
@@ -4284,11 +4236,11 @@ class Spin(_InputElement[tk.Spinbox]):
         """
         # first, get the results table built
         if self._key is not None:
-            self.parent_form_for_buttons.last_button_clicked = self._key
+            self._toplevel_form.last_event_key = self._key
         else:
-            self.parent_form_for_buttons.last_button_clicked = ''
-        self.parent_form_for_buttons.form_remained_open = True
-        _exit_mainloop(self.parent_form_for_buttons)
+            self._toplevel_form.last_event_key = ''
+        self._toplevel_form.form_remained_open = True
+        _exit_mainloop(self._toplevel_form)
 
     @_ensure_widget_created
     def set_ibeam_color(self, ibeam_color=None):
@@ -4363,7 +4315,7 @@ class Spin(_InputElement[tk.Spinbox]):
         if self.wrap is True:
             config_dict['wrap'] = True
         if self.enable_events:
-            config_dict['command'] = self._spinbox_select_handler
+            config_dict['command'] = self._generic_tkinter_callback_handler
             # element._widget.bind('<ButtonRelease-1>', element._SpinChangedHandler)
             # element._widget.bind('<Up>', element._SpinChangedHandler)
             # element._widget.bind('<Down>', element._SpinChangedHandler)
@@ -4373,7 +4325,7 @@ class Spin(_InputElement[tk.Spinbox]):
     @override
     def _set_default_binds(self):
         if self.bind_return_key:
-            self._widget.bind('<Return>', self._spinbox_select_handler)
+            self._widget.bind('<Return>', self._generic_tkinter_callback_handler)
 
 
 # ---------------------------------------------------------------------- #
@@ -4560,8 +4512,8 @@ class Multiline(_InputElement[tk.Text]):
             if not self.auto_scroll_only_at_bottom or (self.auto_scroll_only_at_bottom and current_scroll_position == 1.0):
                 self._widget.see(tk.END)
 
-        if self.auto_refresh and self.parent_form_for_buttons:
-            self.parent_form_for_buttons.refresh()
+        if self.auto_refresh and self._toplevel_form:
+            self._toplevel_form.refresh()
 
     def get(self):
         """
@@ -4660,7 +4612,7 @@ class Multiline(_InputElement[tk.Text]):
         # if nothing on the stack, then need to save the very first stdout
         if len(Window._rerouted_stdout_stack) == 0:
             Window._original_stdout = sys.stdout
-        Window._rerouted_stdout_stack.insert(0, (self.parent_form_for_buttons, self))
+        Window._rerouted_stdout_stack.insert(0, (self._toplevel_form, self))
         sys.stdout = self
 
     def reroute_stderr_to_here(self):
@@ -4669,7 +4621,7 @@ class Multiline(_InputElement[tk.Text]):
         """
         if len(Window._rerouted_stderr_stack) == 0:
             Window._original_stderr = sys.stderr
-        Window._rerouted_stderr_stack.insert(0, (self.parent_form_for_buttons, self))
+        Window._rerouted_stderr_stack.insert(0, (self._toplevel_form, self))
         sys.stderr = self
 
     def restore_stdout(self):
@@ -5045,7 +4997,7 @@ class Text(Element[tk.Text]):
         self.update(outstring, text_color=text_color, background_color=background_color, font=font)
 
         if self.auto_refresh:
-            self.parent_form_for_buttons.refresh()
+            self._toplevel_form.refresh()
 
     def print(self, *args, end=None, sep=None, text_color=None, background_color=None, justification=None, font=None, colors=None, t=None, b=None, c=None, autoscroll=True, append=True):
         """
@@ -5578,7 +5530,7 @@ class Button(Element[tk.Button | ttk.Button]):
 
         """
         self.last_button_clicked_was_realtime = False
-        self.parent_form_for_buttons.last_button_clicked = None
+        self._toplevel_form.last_event_key = None
 
     # Realtime button callback
     def _button_press_callback(self, parm):
@@ -5589,12 +5541,12 @@ class Button(Element[tk.Button | ttk.Button]):
         :type parm:
 
         """
-        self.parent_form_for_buttons.last_button_clicked_was_realtime = True
+        self._toplevel_form.last_button_clicked_was_realtime = True
         if self._key is not None:
-            self.parent_form_for_buttons.last_button_clicked = self._key
+            self._toplevel_form.last_event_key = self._key
         else:
-            self.parent_form_for_buttons.last_button_clicked = self.button_text
-        _exit_mainloop(self.parent_form_for_buttons)
+            self._toplevel_form.last_event_key = self.button_text
+        _exit_mainloop(self._toplevel_form)
 
     def _find_target(self):
         target = self.target
@@ -5611,12 +5563,12 @@ class Button(Element[tk.Button | ttk.Button]):
         else:
             # if target is not hashable, then dict.get() raises an TypeError
             with contextlib.suppress(TypeError):
-                target_element = self.parent_form_for_buttons.all_keys_dict.get(target)
+                target_element = self._toplevel_form.all_keys_dict.get(target)
 
             # if target not found or the above try got exception, then keep looking....
             if target_element is None:
                 if isinstance(target, str):
-                    target_element = self.parent_form_for_buttons.find_element(target)
+                    target_element = self._toplevel_form.find_element(target)
                 else:
                     if target[0] < 0:
                         target = [self._row + target[0], target[1]]
@@ -5648,7 +5600,7 @@ class Button(Element[tk.Button | ttk.Button]):
             if running_mac:  # macs don't like seeing the parent window (go firgure)
                 folder_name = filedialog.askdirectory(initialdir=self.initial_folder)  # show the 'get folder' dialog box
             else:
-                folder_name = filedialog.askdirectory(initialdir=self.initial_folder, parent=self.parent_form_for_buttons.tk_root)  # show the 'get folder' dialog box
+                folder_name = filedialog.askdirectory(initialdir=self.initial_folder, parent=self._toplevel_form.tk_root)  # show the 'get folder' dialog box
             if folder_name:
                 try:
                     strvar.set(folder_name)
@@ -5670,7 +5622,7 @@ class Button(Element[tk.Button | ttk.Button]):
                 # else:
                 #     file_name = filedialog.askopenfilename(initialdir=self.InitialFolder)  # show the 'get file' dialog box
             else:
-                file_name = filedialog.askopenfilename(filetypes=filetypes, initialdir=self.initial_folder, parent=self.parent_form_for_buttons.tk_root)  # show the 'get file' dialog box
+                file_name = filedialog.askopenfilename(filetypes=filetypes, initialdir=self.initial_folder, parent=self._toplevel_form.tk_root)  # show the 'get file' dialog box
 
             if file_name:
                 strvar.set(file_name)
@@ -5678,7 +5630,7 @@ class Button(Element[tk.Button | ttk.Button]):
             else:           # if "cancel" button clicked, don't generate an event
                 should_submit_window = False
         elif self.b_type == Button.TYPE.COLOR_CHOOSER:
-            color = tk.colorchooser.askcolor(parent=self.parent_form_for_buttons.tk_root, color=self.default_color)  # show the 'get file' dialog box
+            color = tk.colorchooser.askcolor(parent=self._toplevel_form.tk_root, color=self.default_color)  # show the 'get file' dialog box
             color = color[1]  # save only the #RRGGBB portion
             if color is not None:
                 strvar.set(color)
@@ -5696,7 +5648,7 @@ class Button(Element[tk.Button | ttk.Button]):
                 # else:
                 #     file_name = filedialog.askopenfilenames(initialdir=self.InitialFolder)
             else:
-                file_name = filedialog.askopenfilenames(filetypes=filetypes, initialdir=self.initial_folder, parent=self.parent_form_for_buttons.tk_root)
+                file_name = filedialog.askopenfilenames(filetypes=filetypes, initialdir=self.initial_folder, parent=self._toplevel_form.tk_root)
 
             if file_name:
                 file_name = self._files_delimiter.join(file_name)  # normally a ';'
@@ -5718,7 +5670,7 @@ class Button(Element[tk.Button | ttk.Button]):
                 # else:
                 #     file_name = filedialog.asksaveasfilename(defaultextension=self.DefaultExtension, initialdir=self.InitialFolder)
             else:
-                file_name = filedialog.asksaveasfilename(filetypes=filetypes, defaultextension=self.default_extension, initialdir=self.initial_folder, parent=self.parent_form_for_buttons.tk_root)
+                file_name = filedialog.asksaveasfilename(filetypes=filetypes, defaultextension=self.default_extension, initialdir=self.initial_folder, parent=self._toplevel_form.tk_root)
 
             if file_name:
                 strvar.set(file_name)
@@ -5729,45 +5681,45 @@ class Button(Element[tk.Button | ttk.Button]):
             # first, get the results table built
             # modify the Results table in the parent FlexForm object
             if self._key is not None:
-                self.parent_form_for_buttons.last_button_clicked = self._key
+                self._toplevel_form.last_event_key = self._key
             else:
-                self.parent_form_for_buttons.last_button_clicked = self.button_text
-            self.parent_form_for_buttons.form_remained_open = False
-            self.parent_form_for_buttons._close()
-            _exit_mainloop(self.parent_form_for_buttons)
+                self._toplevel_form.last_event_key = self.button_text
+            self._toplevel_form.form_remained_open = False
+            self._toplevel_form._close()
+            _exit_mainloop(self._toplevel_form)
 
-            if self.parent_form_for_buttons.non_blocking:
-                self.parent_form_for_buttons.tk_root.destroy()
+            if self._toplevel_form.non_blocking:
+                self._toplevel_form.tk_root.destroy()
                 Window._decrement_open_count()
         elif self.b_type == Button.TYPE.READ_FORM:  # LEAVE THE WINDOW OPEN!! DO NOT CLOSE
             # This is a PLAIN BUTTON
             # first, get the results table built
             # modify the Results table in the parent FlexForm object
             if self._key is not None:
-                self.parent_form_for_buttons.last_button_clicked = self._key
+                self._toplevel_form.last_event_key = self._key
             else:
-                self.parent_form_for_buttons.last_button_clicked = self.button_text
-            self.parent_form_for_buttons.form_remained_open = True
-            _exit_mainloop(self.parent_form_for_buttons)
+                self._toplevel_form.last_event_key = self.button_text
+            self._toplevel_form.form_remained_open = True
+            _exit_mainloop(self._toplevel_form)
         elif self.b_type == Button.TYPE.CLOSES_WIN_ONLY:  # special kind of button that does not exit main loop
-            self.parent_form_for_buttons._close(without_event=True)
-            self.parent_form_for_buttons.tk_root.destroy()  # close the window with tkinter
+            self._toplevel_form._close(without_event=True)
+            self._toplevel_form.tk_root.destroy()  # close the window with tkinter
             Window._decrement_open_count()
         elif self.b_type == Button.TYPE.CALENDAR_CHOOSER:  # this is a return type button so GET RESULTS and destroy window
             # ------------ new chooser code -------------
-            self.parent_form_for_buttons.last_button_clicked = self._key  # key should have been generated already if not set by user
-            self.parent_form_for_buttons.form_remained_open = True
+            self._toplevel_form.last_event_key = self._key  # key should have been generated already if not set by user
+            self._toplevel_form.form_remained_open = True
             should_submit_window = False
-            _exit_mainloop(self.parent_form_for_buttons)
+            _exit_mainloop(self._toplevel_form)
         # elif self.BType == BUTTON_TYPE_SHOW_DEBUGGER:
             # **** DEPRICATED *****
             # if self.ParentForm.DebuggerEnabled:
                 # show_debugger_popout_window()
 
         if should_submit_window:
-            self.parent_form_for_buttons.last_button_clicked = target_element._key
-            self.parent_form_for_buttons.form_remained_open = True
-            _exit_mainloop(self.parent_form_for_buttons)
+            self._toplevel_form.last_event_key = target_element._key
+            self._toplevel_form.form_remained_open = True
+            _exit_mainloop(self._toplevel_form)
 
         return
 
@@ -5928,10 +5880,10 @@ class Button(Element[tk.Button | ttk.Button]):
     
     @override
     def _build_results(self):
-        if self._toplevel_form.last_button_clicked == self._key:
+        if self._toplevel_form.last_event_key == self._key:
             self._toplevel_form.event = self._key
             if self.b_type != Button.TYPE.REALTIME:  # Do not clear realtime buttons
-                self._toplevel_form.last_button_clicked = None
+                self._toplevel_form.last_event_key = None
 
         if self.b_type == Button.TYPE.CALENDAR_CHOOSER:
             value = self.calendar_selection
@@ -6254,9 +6206,9 @@ class ButtonMenu(Element[tk.Menubutton]):
         """
         # print('IN MENU ITEM CALLBACK', item_chosen)
         self.menu_item_chosen = item_chosen
-        self.parent_form_for_buttons.last_button_clicked = self._key
-        self.parent_form_for_buttons.form_remained_open = True
-        _exit_mainloop(self.parent_form_for_buttons)
+        self._toplevel_form.last_event_key = self._key
+        self._toplevel_form.form_remained_open = True
+        _exit_mainloop(self._toplevel_form)
 
     @override
     @_ensure_widget_created
@@ -6302,7 +6254,7 @@ class ButtonMenu(Element[tk.Menubutton]):
                 top_menu.config(disabledforeground=self.disabled_text_color)
             if self.item_font is not None:
                 top_menu.config(font=self.item_font)
-            add_menu_item(top_menu=self.tk_menu, sub_menu_info=self.menu_definition[1], element=self)
+            _add_menu_item(top_menu=self.tk_menu, sub_menu_info=self.menu_definition[1], element=self)
             self._widget.configure(menu=self.tk_menu)
         if image_source is not None:
             filename = data = None
@@ -6380,7 +6332,7 @@ class ButtonMenu(Element[tk.Menubutton]):
                 self._toplevel_form.return_values_dict[self.custom_menubar_key] = None
         
         self._toplevel_form.event = res
-        self._toplevel_form.last_button_clicked = res
+        self._toplevel_form.last_event_key = res
         if self.custom_menubar_key is not None:
             self._toplevel_form.return_values_dict[self.custom_menubar_key] = res
         self.menu_item_chosen = None
@@ -6489,7 +6441,7 @@ class ButtonMenu(Element[tk.Menubutton]):
         if self.item_font is not None:
             top_menu.config(font=self.item_font)
 
-        add_menu_item(top_menu=top_menu, sub_menu_info=menu_def[1], element=self)
+        _add_menu_item(top_menu=top_menu, sub_menu_info=menu_def[1], element=self)
         if self.pad[0] == 0 or self.pad[1] == 0:
             self._widget.config(highlightthickness=0)
         self._widget.configure(menu=top_menu)
@@ -6549,11 +6501,11 @@ class ProgressBar(Element):
         :type max:            (int)
         """
 
-        if self.parent_form_for_buttons.tk_root_destroyed:
+        if self._toplevel_form.tk_root_destroyed:
             return False
         self.tk_progress_bar.Update(current_count, max=max_value)
         try:
-            self.parent_form_for_buttons.tk_root.update()
+            self._toplevel_form.tk_root.update()
         except Exception:
             Window._decrement_open_count()
             # _my_windows.Decrement()
@@ -6589,7 +6541,7 @@ class ProgressBar(Element):
             return False
 
 
-        if self.parent_form_for_buttons.tk_root_destroyed:
+        if self._toplevel_form.tk_root_destroyed:
             return False
 
         if visible is False:
@@ -6610,7 +6562,7 @@ class ProgressBar(Element):
             self._widget['value'] = current_count
 
         try:
-            self.parent_form_for_buttons.tk_root.update()
+            self._toplevel_form.tk_root.update()
         except Exception:
             # Window._DecrementOpenCount()
             # _my_windows.Decrement()
@@ -6944,7 +6896,7 @@ class Image(Element[tk.Label]):
     @override
     def _set_default_binds(self):
         if self.enable_events and self._widget is not None:
-            self._widget.bind('<ButtonPress-1>', self._click_handler)
+            self._widget.bind('<ButtonPress-1>', self._generic_tkinter_callback_handler)
 
 
 # ---------------------------------------------------------------------- #
@@ -7609,16 +7561,16 @@ class Graph(Element[tk.Canvas]):
         if not self.drag_submits:
             return  # only report mouse up for drag operations
         self.click_position = self._convert_canvas_xy_to_xy(event.x, event.y)
-        self.parent_form_for_buttons.last_button_clicked_was_realtime = False
+        self._toplevel_form.last_button_clicked_was_realtime = False
         if self._key is not None:
-            self.parent_form_for_buttons.last_button_clicked = self._key
+            self._toplevel_form.last_event_key = self._key
         else:
-            self.parent_form_for_buttons.last_button_clicked = '__GRAPH__'  # need to put something rather than None
-        _exit_mainloop(self.parent_form_for_buttons)
-        if isinstance(self.parent_form_for_buttons.last_button_clicked, str):
-            self.parent_form_for_buttons.last_button_clicked = self.parent_form_for_buttons.last_button_clicked + '+UP'
+            self._toplevel_form.last_event_key = '__GRAPH__'  # need to put something rather than None
+        _exit_mainloop(self._toplevel_form)
+        if isinstance(self._toplevel_form.last_event_key, str):
+            self._toplevel_form.last_event_key = self._toplevel_form.last_event_key + '+UP'
         else:
-            self.parent_form_for_buttons.last_button_clicked = (self.parent_form_for_buttons.last_button_clicked, '+UP')
+            self._toplevel_form.last_event_key = (self._toplevel_form.last_event_key, '+UP')
         self.mouse_button_down = False
 
 
@@ -7632,12 +7584,12 @@ class Graph(Element[tk.Canvas]):
         """
 
         self.click_position = self._convert_canvas_xy_to_xy(event.x, event.y)
-        self.parent_form_for_buttons.last_button_clicked_was_realtime = self.drag_submits
+        self._toplevel_form.last_button_clicked_was_realtime = self.drag_submits
         if self._key is not None:
-            self.parent_form_for_buttons.last_button_clicked = self._key
+            self._toplevel_form.last_event_key = self._key
         else:
-            self.parent_form_for_buttons.last_button_clicked = '__GRAPH__'  # need to put something rather than None
-        _exit_mainloop(self.parent_form_for_buttons)
+            self._toplevel_form.last_event_key = '__GRAPH__'  # need to put something rather than None
+        _exit_mainloop(self._toplevel_form)
         self.mouse_button_down = True
 
     def _update_position_for_returned_values(self, event):
@@ -7710,17 +7662,17 @@ class Graph(Element[tk.Canvas]):
         if not self.mouse_button_down and not self.motion_events:
             return
         self.click_position = self._convert_canvas_xy_to_xy(event.x, event.y)
-        self.parent_form_for_buttons.last_button_clicked_was_realtime = self.drag_submits
+        self._toplevel_form.last_button_clicked_was_realtime = self.drag_submits
         if self._key is not None:
-            self.parent_form_for_buttons.last_button_clicked = self._key
+            self._toplevel_form.last_event_key = self._key
         else:
-            self.parent_form_for_buttons.last_button_clicked = '__GRAPH__'  # need to put something rather than None
+            self._toplevel_form.last_event_key = '__GRAPH__'  # need to put something rather than None
         if self.motion_events and not self.mouse_button_down:
-            if isinstance(self.parent_form_for_buttons.last_button_clicked, str):
-                self.parent_form_for_buttons.last_button_clicked = self.parent_form_for_buttons.last_button_clicked + '+MOVE'
+            if isinstance(self._toplevel_form.last_event_key, str):
+                self._toplevel_form.last_event_key = self._toplevel_form.last_event_key + '+MOVE'
             else:
-                self.parent_form_for_buttons.last_button_clicked = (self.parent_form_for_buttons.last_button_clicked, '+MOVE')
-        _exit_mainloop(self.parent_form_for_buttons)
+                self._toplevel_form.last_event_key = (self._toplevel_form.last_event_key, '+MOVE')
+        _exit_mainloop(self._toplevel_form)
 
     @property
     def TKCanvas(self) -> tk.Canvas:  # noqa: N802
@@ -8324,11 +8276,11 @@ class TabGroup(Container, Element[ttk.Notebook]):
         """
         self._verified_row(tab_element)
         tab_element._widget = tk.Frame(self._widget)
-        form = self.parent_form_for_buttons
+        form = self._toplevel_form
         form._build_key_dict_for_window(tab_element, form.all_keys_dict)
         form.all_keys_dict[tab_element._key] = tab_element
         # Pack the tab's layout into the tab. NOTE - This does NOT pack the Tab itself... for that see below...
-        tab_element.pack_form_into_frame(tab_element._widget, self.parent_form_for_buttons)
+        tab_element.pack_form_into_frame(tab_element._widget, self._toplevel_form)
 
         # - This is below -    Perform the same operation that is performed when a Tab is packed into the window.
         # If there's an image in the tab, then do the imagey-stuff
@@ -8372,7 +8324,7 @@ class TabGroup(Container, Element[ttk.Notebook]):
             self._widget.add(tab_element._widget, text=tab_element.title, state=state)
         tab_element.parent_notebook = self._widget
         tab_element.tab_id = self.tab_count
-        tab_element.parent_form = self.parent_form_for_buttons
+        tab_element.parent_form = self._toplevel_form
         self.tab_count += 1
         if tab_element.background_color not in {None, COLOR_SYSTEM_DEFAULT}:
             tab_element._widget.configure(background=tab_element.background_color, highlightbackground=tab_element.background_color,
@@ -8464,7 +8416,7 @@ class TabGroup(Container, Element[ttk.Notebook]):
     @override
     def _set_default_binds(self):
         if self.enable_events:
-            self._widget.bind('<<NotebookTabChanged>>', self._tab_group_select_handler)
+            self._widget.bind('<<NotebookTabChanged>>', self._generic_tkinter_callback_handler)
 
     @override
     def _right_click_menu_callback(self, event):
@@ -8472,7 +8424,7 @@ class TabGroup(Container, Element[ttk.Notebook]):
             index = self._widget.index(f"@{event.x},{event.y}")
             tab = self._widget.tab(index, 'text')
             key = self.find_key_from_tab_name(tab)
-            tab_element = self.parent_form_for_buttons.key_dict[key]
+            tab_element = self._toplevel_form.key_dict[key]
             if tab_element.right_click_menu is None:      # if this tab didn't explicitly have a menu, then don't show anything
                 return
             tab_element.tk_right_click_menu.tk_popup(event.x_root, event.y_root, 0)
@@ -8593,11 +8545,11 @@ class Slider(Element[tk.Scale]):
         """
 
         if self._key is not None:
-            self.parent_form_for_buttons.last_button_clicked = self._key
+            self._toplevel_form.last_event_key = self._key
         else:
-            self.parent_form_for_buttons.last_button_clicked = ''
-        self.parent_form_for_buttons.form_remained_open = True
-        _exit_mainloop(self.parent_form_for_buttons)
+            self._toplevel_form.last_event_key = ''
+        self._toplevel_form.form_remained_open = True
+        _exit_mainloop(self._toplevel_form)
 
     @override
     def _build_results(self):
@@ -9361,9 +9313,9 @@ class Menu(Element[tk.Menu]):
         """
         # print('IN MENU ITEM CALLBACK', item_chosen)
         self.menu_item_chosen = item_chosen
-        self.parent_form_for_buttons.last_button_clicked = item_chosen
-        self.parent_form_for_buttons.form_remained_open = True
-        _exit_mainloop(self.parent_form_for_buttons)
+        self._toplevel_form.last_event_key = item_chosen
+        self._toplevel_form.form_remained_open = True
+        _exit_mainloop(self._toplevel_form)
 
     @override
     @_ensure_widget_created
@@ -9389,7 +9341,7 @@ class Menu(Element[tk.Menu]):
         if menu_definition is not None:
             self.menu_definition = copy.deepcopy(menu_definition)
             if self._widget is None:     # if no menu exists, make one
-                self._widget = tk.Menu(self.parent_form_for_buttons.tk_root, tearoff=self.tearoff, tearoffcommand=self._tearoff_menu_callback)  # create the menubar
+                self._widget = tk.Menu(self._toplevel_form.tk_root, tearoff=self.tearoff, tearoffcommand=self._tearoff_menu_callback)  # create the menubar
             menubar = self._widget
             # Delete all the menu items (assuming 10000 should be a high enough number to cover them all)
             menubar.delete(0, 10000)
@@ -9420,19 +9372,19 @@ class Menu(Element[tk.Menu]):
                     menubar.add_cascade(label=menu_entry[0], menu=baritem, underline=pos)
 
                 if len(menu_entry) > 1:
-                    add_menu_item(top_menu=baritem, sub_menu_info=menu_entry[1], element=self)
+                    _add_menu_item(top_menu=baritem, sub_menu_info=menu_entry[1], element=self)
 
         if visible is False:
-            self.parent_form_for_buttons.tk_root.configure(menu=[])  # this will cause the menubar to disappear
+            self._toplevel_form.tk_root.configure(menu=[])  # this will cause the menubar to disappear
         elif self._widget is not None:
-            self.parent_form_for_buttons.tk_root.configure(menu=self._widget)
+            self._toplevel_form.tk_root.configure(menu=self._widget)
         if visible is not None:
             self._visible = visible
 
     @override
     def _build_results(self):
         if self.menu_item_chosen is not None:
-            self._toplevel_form.event = self._toplevel_form.last_button_clicked = self.menu_item_chosen
+            self._toplevel_form.event = self._toplevel_form.last_event_key = self.menu_item_chosen
         res = self.menu_item_chosen
         self.menu_item_chosen = None
         
@@ -9505,7 +9457,7 @@ class Menu(Element[tk.Menu]):
                 self._widget.add_cascade(label=menu_entry[0], menu=baritem, underline=pos)
 
             if len(menu_entry) > 1:
-                add_menu_item(top_menu=baritem, sub_menu_info=menu_entry[1], element=self)
+                _add_menu_item(top_menu=baritem, sub_menu_info=menu_entry[1], element=self)
         self._toplevel_form.tk_root.configure(menu=self._widget)
 
 
@@ -9730,11 +9682,11 @@ class Table(Element[ttk.Treeview]):
         self.selected_rows = [int(x) - 1 for x in selections]
         if self.enable_events:
             if self._key is not None:
-                self.parent_form_for_buttons.last_button_clicked = self._key
+                self._toplevel_form.last_event_key = self._key
             else:
-                self.parent_form_for_buttons.last_button_clicked = ''
-            self.parent_form_for_buttons.form_remained_open = True
-            _exit_mainloop(self.parent_form_for_buttons)
+                self._toplevel_form.last_event_key = ''
+            self._toplevel_form.form_remained_open = True
+            _exit_mainloop(self._toplevel_form)
 
     def _treeview_double_click(self, event):
         """
@@ -9748,11 +9700,11 @@ class Table(Element[ttk.Treeview]):
         self.selected_rows = [int(x) - 1 for x in selections]
         if self.bind_return_key:  # Signifies BOTH a return key AND a double click
             if self._key is not None:
-                self.parent_form_for_buttons.last_button_clicked = self._key
+                self._toplevel_form.last_event_key = self._key
             else:
-                self.parent_form_for_buttons.last_button_clicked = ''
-            self.parent_form_for_buttons.form_remained_open = True
-            _exit_mainloop(self.parent_form_for_buttons)
+                self._toplevel_form.last_event_key = ''
+            self._toplevel_form.form_remained_open = True
+            _exit_mainloop(self._toplevel_form)
 
     @_ensure_widget_created
     def _table_clicked(self, event):
@@ -9788,7 +9740,7 @@ class Table(Element[ttk.Treeview]):
         self.last_clicked_position = (row, column)
 
         # update the rows being selected if appropriate
-        self.parent_form_for_buttons.tk_root.update()
+        self._toplevel_form.tk_root.update()
         # self.TKTreeview.()
         selections = self._widget.selection()
         if self.right_click_selects and len(selections) <= 1:
@@ -9801,11 +9753,11 @@ class Table(Element[ttk.Treeview]):
         # print('The new selected rows = ', self.SelectedRows, 'selections =', selections)
         if self.enable_click_events is True:
             if self._key is not None:
-                self.parent_form_for_buttons.last_button_clicked = (self._key, TABLE_CLICKED_INDICATOR, (row, column))
+                self._toplevel_form.last_event_key = (self._key, TABLE_CLICKED_INDICATOR, (row, column))
             else:
-                self.parent_form_for_buttons.last_button_clicked = ''
-            self.parent_form_for_buttons.form_remained_open = True
-            _exit_mainloop(self.parent_form_for_buttons)
+                self._toplevel_form.last_event_key = ''
+            self._toplevel_form.form_remained_open = True
+            _exit_mainloop(self._toplevel_form)
 
     def get(self):
         """
@@ -10167,11 +10119,11 @@ class Tree(Element[ttk.Treeview]):
 
         if self.enable_events:
             if self._key is not None:
-                self.parent_form_for_buttons.last_button_clicked = self._key
+                self._toplevel_form.last_event_key = self._key
             else:
-                self.parent_form_for_buttons.last_button_clicked = ''
-            self.parent_form_for_buttons.form_remained_open = True
-            _exit_mainloop(self.parent_form_for_buttons)
+                self._toplevel_form.last_event_key = ''
+            self._toplevel_form.form_remained_open = True
+            _exit_mainloop(self._toplevel_form)
     
     @override
     def _build_results(self):
@@ -10986,7 +10938,7 @@ class Window(Container):
         self.return_values_list = []
         self.return_values_dict = {}
         self._dictionary_key_counter = 0
-        self.last_button_clicked = None
+        self.last_event_key = None
         self.last_button_clicked_was_realtime = False
         self._use_dictionary = False
         self.use_default_focus = use_default_focus
@@ -11282,7 +11234,7 @@ class Window(Container):
         # -=-=-=-=-=-=-=-=- RUN the GUI -=-=-=-=-=-=-=-=- ##
         _startup_tk(self)
         # If a button or keyboard event happened but no results have been built, build the results
-        if self.last_keyboard_event is not None or self.last_button_clicked is not None:
+        if self.last_keyboard_event is not None or self.last_event_key is not None:
             return _build_results(self)
         return self.return_values
 
@@ -11369,7 +11321,7 @@ class Window(Container):
         if self.timer_cancelled:
             # print('** timer was cancelled **')
             return
-        self.last_button_clicked = self.timeout_key
+        self.last_event_key = self.timeout_key
         self.form_remained_open = True
         self.tk_root.quit()  # kick the users out of the mainloop
 
@@ -11411,7 +11363,7 @@ class Window(Container):
             strvar.set(date_string)
             elem._tk_string_var.set(date_string)
             if should_submit_window:
-                self.last_button_clicked = target_element.key
+                self.last_event_key = target_element.key
                 # results = _BuildResults(self)
         else:
             should_submit_window = False
@@ -11528,9 +11480,9 @@ class Window(Container):
             self._show()
         else:
             # if already have a button waiting, then return previously built results
-            if self.last_button_clicked is not None and not self.last_button_clicked_was_realtime:
+            if self.last_event_key is not None and not self.last_button_clicked_was_realtime:
                 results = _build_results(self)
-                self.last_button_clicked = None
+                self.last_event_key = None
                 return results
             
             initialize_results(self)
@@ -11542,8 +11494,8 @@ class Window(Container):
             # the idea is to quickly return realtime buttons without any blocks until released
             if self.last_button_clicked_was_realtime:
                 # clear the realtime flag if the element is not a button element (for example a graph element that is dragging)
-                if self.all_keys_dict.get(self.last_button_clicked, None):
-                    if isinstance(self.all_keys_dict.get(self.last_button_clicked), Button):
+                if self.all_keys_dict.get(self.last_event_key, None):
+                    if isinstance(self.all_keys_dict.get(self.last_event_key), Button):
                         self.last_button_clicked_was_realtime = False  # stops from generating events until something changes
                 else:  # it is possible for the key to not be in the dicitonary because it has a modifier. If so, then clear the realtime button flag
                     self.last_button_clicked_was_realtime = False  # stops from generating events until something changes
@@ -11569,7 +11521,7 @@ class Window(Container):
                 except Exception:
                     pass
                 # _my_windows.Decrement()
-                self.last_button_clicked = None
+                self.last_event_key = None
                 return None, None
 
             # normal read blocking code....
@@ -11604,17 +11556,17 @@ class Window(Container):
                     pass
                 Window._decrement_open_count()
                 # _my_windows.Decrement()
-                self.last_button_clicked = None
+                self.last_event_key = None
                 return None, None
             # if form was closed with X
-            if self.last_button_clicked is None and self.last_keyboard_event is None and self.return_values[0] is None:
+            if self.last_event_key is None and self.last_keyboard_event is None and self.return_values[0] is None:
                 Window._decrement_open_count()
                 # _my_windows.Decrement()
         # Determine return values
-        if self.last_keyboard_event is not None or self.last_button_clicked is not None:
+        if self.last_keyboard_event is not None or self.last_event_key is not None:
             results = _build_results(self)
             if not self.last_button_clicked_was_realtime:
-                self.last_button_clicked = None
+                self.last_event_key = None
             return results
         
         if self._queued_thread_event_available():
@@ -11659,7 +11611,7 @@ class Window(Container):
             Window._decrement_open_count()
             # _my_windows.Decrement()
             self.values = None
-            self.last_button_clicked = None
+            self.last_event_key = None
             return None, None
         return _build_results(self)
     
@@ -12122,7 +12074,7 @@ class Window(Container):
         :param event:            From tkinter and is not used
         :type event:             Any
         """
-        self.last_button_clicked = WINDOW_CONFIG_EVENT
+        self.last_event_key = WINDOW_CONFIG_EVENT
         self.form_remained_open = True
         self.user_bind_event = event
         _exit_mainloop(self)
@@ -12202,7 +12154,7 @@ class Window(Container):
         :param event: object provided by tkinter that contains the key information
         :type event:  (event)
         """
-        self.last_button_clicked = None
+        self.last_event_key = None
         self.form_remained_open = True
         if event.char != '':
             self.last_keyboard_event = event.char
@@ -12220,7 +12172,7 @@ class Window(Container):
         :param event: object sent in by tkinter that has the wheel direction
         :type event:  (event)
         """
-        self.last_button_clicked = None
+        self.last_event_key = None
         self.form_remained_open = True
         self.last_keyboard_event = 'MouseWheel:Down' if event.delta < 0 or event.num == 5 else 'MouseWheel:Up'
         # if not self.NonBlocking:
@@ -12356,7 +12308,7 @@ class Window(Container):
                 self.tk_root_destroyed = True
                 self.x_found = True
             else:
-                self.last_button_clicked = WINDOW_CLOSE_ATTEMPTED_EVENT
+                self.last_event_key = WINDOW_CLOSE_ATTEMPTED_EVENT
         elif Window._root_running_mainloop == Window.hidden_master_root:
             _exit_mainloop(self)
         else:
@@ -12364,7 +12316,7 @@ class Window(Container):
                 self.tk_root.destroy()  # destroy this window
                 self.x_found = True
             else:
-                self.last_button_clicked = WINDOW_CLOSE_ATTEMPTED_EVENT
+                self.last_event_key = WINDOW_CLOSE_ATTEMPTED_EVENT
         if self.close_destroys_window:
             self.root_needs_destroying = True
         self._restore_stdout()
@@ -12734,9 +12686,9 @@ class Window(Container):
         key = self.user_bind_dict.get(bind_string, '')
         self.user_bind_event = event
         if key is not None:
-            self.last_button_clicked = key
+            self.last_event_key = key
         else:
-            self.last_button_clicked = bind_string
+            self.last_event_key = bind_string
         self.form_remained_open = True
         _exit_mainloop(self)
         return 'break' if propagate is not True else None
@@ -12788,7 +12740,7 @@ class Window(Container):
         """
         Window._main_debug_window_build_needed = True
         # exit the event loop in a way that resembles a timeout occurring
-        self.last_button_clicked = self.timeout_key
+        self.last_event_key = self.timeout_key
         self.form_remained_open = True
         self.tk_root.quit()  # kick the users out of the mainloop
 
@@ -12801,7 +12753,7 @@ class Window(Container):
         """
         Window._floating_debug_window_build_needed = True
         # exit the event loop in a way that resembles a timeout occurring
-        self.last_button_clicked = self.timeout_key
+        self.last_event_key = self.timeout_key
         self.form_remained_open = True
         self.tk_root.quit()  # kick the users out of the mainloop
 
@@ -13675,7 +13627,7 @@ class SystemTray:
         # Menu
         if menu is not None:
             top_menu = tk.Menu(self.window.tk_root, tearoff=False)
-            add_menu_item(top_menu=top_menu, sub_menu_info=menu[1], element=self.window['-IMAGE-'])
+            _add_menu_item(top_menu=top_menu, sub_menu_info=menu[1], element=self.window['-IMAGE-'])
             self.window['-IMAGE-'].tk_right_click_menu = top_menu
 
         if filename:
@@ -15251,7 +15203,7 @@ def _build_results(window: Window, *, initialize_only: bool = False):
     # form.DictionaryKeyCounter = 0
     window.return_values_dict = {}
     window.return_values_list = []
-    window.event = window.last_button_clicked
+    window.event = window.last_event_key
     window._build_results()
     if window.return_keyboard_events and window.last_keyboard_event is not None:
         window.event = window.last_keyboard_event
@@ -15265,7 +15217,7 @@ def _build_results(window: Window, *, initialize_only: bool = False):
             window.return_values_list.append(value)
             window.return_values_dict[window.event] = value
     if not window.last_button_clicked_was_realtime:
-        window.last_button_clicked = None
+        window.last_event_key = None
     
     window.return_values = window.event, (window.return_values_dict if window._use_dictionary else window.return_values_list)
     return window.return_values
@@ -15290,11 +15242,11 @@ def fill_form_with_values(window, values_dict):
             print(f"Problem filling form. Perhaps bad key?  This is a suspected bad key: {element_key}")
 
 
-def add_menu_item(*, top_menu, sub_menu_info, element, is_sub_menu=False, skip=False, right_click_menu=False):
+def _add_menu_item(*, top_menu:tk.Menu, sub_menu_info, element, is_sub_menu=False, skip=False, right_click_menu=False):
     """
     Only to be used internally. Not user callable
-    :param top_menu:      ???
-    :type top_menu:       ???
+    :param top_menu:      the top tk.Menu object
+    :type top_menu:       tk.Menu
     :param sub_menu_info: ???
     :type sub_menu_info:
     :param element:       ???
@@ -15305,79 +15257,78 @@ def add_menu_item(*, top_menu, sub_menu_info, element, is_sub_menu=False, skip=F
     :type skip:           (bool)
 
     """
-    return_val = None
     if type(sub_menu_info) is str:
-        if not is_sub_menu and not skip:
-            pos = sub_menu_info.find(Menu.SHORTCUT_CHARACTER)
-            if pos != -1:
-                if pos < len(Menu.SHORTCUT_CHARACTER) or sub_menu_info[pos - len(Menu.SHORTCUT_CHARACTER)] != "\\":
-                    sub_menu_info = sub_menu_info[:pos] + sub_menu_info[pos + len(Menu.SHORTCUT_CHARACTER):]
-            if sub_menu_info == '---':
-                top_menu.add('separator')
-            else:
-                try:
-                    item_without_key = sub_menu_info[:sub_menu_info.index(Menu.KEY_SEPARATOR)]
-                except Exception:
-                    item_without_key = sub_menu_info
+        if is_sub_menu or skip:
+            return
+        
+        pos = sub_menu_info.find(Menu.SHORTCUT_CHARACTER)
+        if pos != -1:
+            if pos < len(Menu.SHORTCUT_CHARACTER) or sub_menu_info[pos - len(Menu.SHORTCUT_CHARACTER)] != "\\":
+                sub_menu_info = sub_menu_info[:pos] + sub_menu_info[pos + len(Menu.SHORTCUT_CHARACTER):]
 
-                if item_without_key[0] == Menu.DISABLED_CHARACTER:
-                    top_menu.add_command(label=item_without_key[len(Menu.DISABLED_CHARACTER):], underline=pos - 1,
-                                         command=lambda: element._menu_item_chosen_callback(sub_menu_info))
-                    top_menu.entryconfig(item_without_key[len(Menu.DISABLED_CHARACTER):], state='disabled')
-                else:
-                    top_menu.add_command(label=item_without_key, underline=pos,
-                                         command=lambda: element._menu_item_chosen_callback(sub_menu_info))
+        if sub_menu_info == '---':
+            top_menu.add('separator')
+            return
+        
+        try:
+            item_without_key = sub_menu_info[:sub_menu_info.index(Menu.KEY_SEPARATOR)]
+        except Exception:
+            item_without_key = sub_menu_info
+
+        if item_without_key[0] == Menu.DISABLED_CHARACTER:
+            top_menu.add_command(label=item_without_key[len(Menu.DISABLED_CHARACTER):], underline=pos - 1,
+                                    command=lambda: element._menu_item_chosen_callback(sub_menu_info))
+            top_menu.entryconfig(item_without_key[len(Menu.DISABLED_CHARACTER):], state='disabled')
+        else:
+            top_menu.add_command(label=item_without_key, underline=pos,
+                                    command=lambda: element._menu_item_chosen_callback(sub_menu_info))
     else:
         i = 0
         while i < (len(sub_menu_info)):
             item = sub_menu_info[i]
-            if i != len(sub_menu_info) - 1:
-                if isinstance(sub_menu_info[i + 1], list):
-                    new_menu = tk.Menu(top_menu, tearoff=element.tearoff)
-                    # if a right click menu, then get styling from the top-level window
-                    if right_click_menu:
-                        window = element.parent_form
-                        if window.right_click_menu_background_color not in (COLOR_SYSTEM_DEFAULT, None):
-                            new_menu.config(bg=window.right_click_menu_background_color)
-                            new_menu.config(activeforeground=window.right_click_menu_background_color)
-                        if window.right_click_menu_text_color not in (COLOR_SYSTEM_DEFAULT, None):
-                            new_menu.config(fg=window.right_click_menu_text_color)
-                            new_menu.config(activebackground=window.right_click_menu_text_color)
-                        if window.right_click_menu_disabled_text_color not in (COLOR_SYSTEM_DEFAULT, None):
-                            new_menu.config(disabledforeground=window.right_click_menu_disabled_text_color)
-                        if window.right_click_menu_font is not None:
-                            new_menu.config(font=window.right_click_menu_font)
-                    else:
-                        if element.font is not None:
-                            new_menu.config(font=element.font)
-                        if element.background_color not in (COLOR_SYSTEM_DEFAULT, None):
-                            new_menu.config(bg=element.background_color)
-                            new_menu.config(activeforeground=element.background_color)
-                        if element._text_color not in (COLOR_SYSTEM_DEFAULT, None):
-                            new_menu.config(fg=element._text_color)
-                            new_menu.config(activebackground=element._text_color)
-                        if element.disabled_text_color not in (COLOR_SYSTEM_DEFAULT, None):
-                            new_menu.config(disabledforeground=element.disabled_text_color)
-                        if element.item_font is not None:
-                            new_menu.config(font=element.item_font)
-                    return_val = new_menu
-                    pos = sub_menu_info[i].find(Menu.SHORTCUT_CHARACTER)
-                    if pos != -1:
-                        if pos < len(Menu.SHORTCUT_CHARACTER) or sub_menu_info[i][pos - len(Menu.SHORTCUT_CHARACTER)] != "\\":
-                            sub_menu_info[i] = sub_menu_info[i][:pos] + sub_menu_info[i][pos + len(Menu.SHORTCUT_CHARACTER):]
-                    if sub_menu_info[i][0] == Menu.DISABLED_CHARACTER:
-                        top_menu.add_cascade(label=sub_menu_info[i][len(Menu.DISABLED_CHARACTER):], menu=new_menu,
-                                             underline=pos, state='disabled')
-                    else:
-                        top_menu.add_cascade(label=sub_menu_info[i], menu=new_menu, underline=pos)
-                    add_menu_item(top_menu=new_menu, sub_menu_info=sub_menu_info[i + 1], element=element, is_sub_menu=True, right_click_menu=right_click_menu)
-                    i += 1  # skip the next one
-                else:
-                    add_menu_item(top_menu=top_menu, sub_menu_info=item, element=element, right_click_menu=right_click_menu)
+            if i == len(sub_menu_info) - 1 or not isinstance(sub_menu_info[i + 1], list):
+                _add_menu_item(top_menu=top_menu, sub_menu_info=item, element=element, right_click_menu=right_click_menu)
+                i += 1
+                continue
+
+            # next item is a list, so the current item is the name of that list
+            # if a right click menu, then get styling from the top-level window
+            if right_click_menu:
+                window = element.parent_form
+                # if window.right_click_menu_background_color not in (COLOR_SYSTEM_DEFAULT, None):
+                cnf = {
+                    'font': window.right_click_menu_font,
+                    'bg': window.right_click_menu_background_color,
+                    'activeforeground': window.right_click_menu_background_color,
+                    'fg': window.right_click_menu_text_color,
+                    'activebackground': window.right_click_menu_text_color,
+                    'disabledforeground': window.right_click_menu_disabled_text_color
+                }
             else:
-                add_menu_item(top_menu=top_menu, sub_menu_info=item, element=element, right_click_menu=right_click_menu)
+                cnf = {
+                    'font': element.font,
+                    'bg': element.background_color,
+                    'activeforeground': element.background_color,
+                    'fg': element._text_color,
+                    'activebackground': element._text_color,
+                    'disabledforeground': element.disabled_text_color
+                }
+                if element.item_font is not None:
+                    cnf['font'] = element.item_font
+            cnf = {key: val for key, val in cnf.items() if key not in (COLOR_SYSTEM_DEFAULT, None)}
+            new_menu = tk.Menu(top_menu, cnf=cnf, tearoff=element.tearoff)
+            pos = item.find(Menu.SHORTCUT_CHARACTER)
+            if pos != -1:
+                if pos < len(Menu.SHORTCUT_CHARACTER) or item[pos - len(Menu.SHORTCUT_CHARACTER)] != "\\":
+                    item = item[:pos] + item[pos + len(Menu.SHORTCUT_CHARACTER):]
+            if item[0] == Menu.DISABLED_CHARACTER:
+                top_menu.add_cascade(label=item[len(Menu.DISABLED_CHARACTER):], menu=new_menu,
+                                        underline=pos, state='disabled')
+            else:
+                top_menu.add_cascade(label=item, menu=new_menu, underline=pos)
+            _add_menu_item(top_menu=new_menu, sub_menu_info=sub_menu_info[i + 1], element=element, is_sub_menu=True, right_click_menu=right_click_menu)
+            i += 1  # skip the next one
             i += 1
-    return return_val
 
 
 # 888    888      d8b          888
@@ -15458,7 +15409,7 @@ def _add_right_click_menu(element, toplevel_form):
             top_menu.config(activeforeground=toplevel_form.right_click_menu_selected_colors[0])
         if toplevel_form.right_click_menu_selected_colors[1] not in (COLOR_SYSTEM_DEFAULT, None):
             top_menu.config(activebackground=toplevel_form.right_click_menu_selected_colors[1])
-        add_menu_item(top_menu=top_menu, sub_menu_info=menu[1], element=element, right_click_menu=True)
+        _add_menu_item(top_menu=top_menu, sub_menu_info=menu[1], element=element, right_click_menu=True)
         element.tk_right_click_menu = top_menu
         if running_mac:
             element._widget.bind('<ButtonRelease-2>', element._RightClickMenuCallback)
@@ -19333,7 +19284,7 @@ def popup_menu(window, element, menu_def, title=None, location=(None, None)):
     if window.right_click_menu_selected_colors[1] != COLOR_SYSTEM_DEFAULT:
         top_menu.config(activebackground=window.right_click_menu_selected_colors[1])
     top_menu.config(title=window.title if title is None else title)
-    add_menu_item(top_menu=top_menu, sub_menu_info=menu_def[1], element=element, right_click_menu=True)
+    _add_menu_item(top_menu=top_menu, sub_menu_info=menu_def[1], element=element, right_click_menu=True)
     # element._widget.bind('<Button-3>', element._RightClickMenuCallback)
     top_menu.invoke(0)
 
@@ -19409,9 +19360,11 @@ def _error_popup_with_code(title, filename, line_num, *args,  emoji=None):
     lines = []
     for msg in args:
         if isinstance(msg, Exception):
-            lines += [[f'Additional Exception info pased in by PySimpleGUI or user: Error type is: {type(msg).__name__}']]
-            lines += [[f'In file {__file__} Line number {msg.__traceback__.tb_lineno}']]
-            lines += [[f'{msg}']]
+            lines += [
+                [f'Additional Exception info pased in by PySimpleGUI or user: Error type is: {type(msg).__name__}'],
+                [f'In file {__file__} Line number {msg.__traceback__.tb_lineno}'],
+                [f'{msg}']
+            ]
         else:
             lines += [str(msg).split('\n')]
     max_line_len = 0
@@ -19419,7 +19372,11 @@ def _error_popup_with_code(title, filename, line_num, *args,  emoji=None):
         max_line_len = max(max_line_len, *[len(s) for s in line])
 
     layout += [[Text(''.join(line), size=(min(max_line_len, 90), None))] for line in lines]
-    layout += [[Button('Close'), Button('Take me to error', disabled=not editor_filename), Button('Kill Application', button_color='white on red')]]
+    layout += [[
+        Button('Close'),
+        Button('Take me to error', disabled=not editor_filename),
+        Button('Kill Application', button_color='white on red')
+    ]]
     if not editor_filename:
         layout += [[Text('Configure editor in the Global settings to enable "Take me to error" feature')]]
     window = Window(title, layout, keep_on_top=True)
@@ -20444,57 +20401,6 @@ def execute_command_subprocess(command, *args, wait=False, cwd=None, pipe_output
     return sp
 
 
-def execute_py_file(*, pyfile, parms=None, cwd=None, interpreter_command=None, wait=False, pipe_output=False, merge_stderr_with_stdout=True):
-    """
-    Executes a Python file.
-    The interpreter to use is chosen based on this priority order:
-        1. interpreter_command paramter
-        2. global setting "-python command-"
-        3. the interpreter running running PySimpleGUI
-    :param pyfile:                   the file to run
-    :type pyfile:                    (str)
-    :param parms:                    parameters to pass on the command line
-    :type parms:                     (str)
-    :param cwd:                      the working directory to use
-    :type cwd:                       (str)
-    :param interpreter_command:      the command used to invoke the Python interpreter
-    :type interpreter_command:       (str)
-    :param wait:                     the working directory to use
-    :type wait:                      (bool)
-    :param pipe_output:              If True then output from the subprocess will be piped. You MUST empty the pipe by calling execute_get_results or your subprocess will block until no longer full
-    :type pipe_output:               (bool)
-    :param merge_stderr_with_stdout: If True then output from the subprocess stderr will be merged with stdout. The result is ALL output will be on stdout.
-    :type merge_stderr_with_stdout:  (bool)
-    :return:                         Popen object
-    :rtype:                          (subprocess.Popen) | None
-    """
-
-    if cwd is None:
-        # if the specific file is not found (not an absolute path) then assume it's relative to '.'
-        if not os.path.exists(pyfile):
-            cwd = '.'
-
-    if pyfile[0] != '"' and ' ' in pyfile:
-        pyfile = '"' + pyfile + '"'
-    if interpreter_command is not None:
-        python_program = interpreter_command
-    else:
-        # use the version CURRENTLY RUNNING if nothing is specified. Previously used the one from the settings file
-        # ^ hmmm... that's not the code is doing now... it's getting the one from the settings file first
-        pysimplegui_user_settings.load()        # Refresh the settings just in case they've changed via another program
-        python_program = pysimplegui_user_settings.get('-python command-', '')
-        if python_program == '':        # if no interpreter set in the settings, then use the current one
-            python_program = sys.executable
-            # python_program = 'python' if running_windows() else 'python3'
-    if parms is not None and python_program:
-        sp = execute_command_subprocess(python_program, pyfile, parms, wait=wait, cwd=cwd, pipe_output=pipe_output, merge_stderr_with_stdout=merge_stderr_with_stdout)
-    elif python_program:
-        sp = execute_command_subprocess(python_program, pyfile, wait=wait, cwd=cwd, pipe_output=pipe_output, merge_stderr_with_stdout=merge_stderr_with_stdout)
-    else:
-        print('execute_py_file - No interpreter has been configured')
-        sp = None
-    return sp
-
 
 def execute_py_get_interpreter():
     """
@@ -20703,12 +20609,13 @@ available to make this process more atuomatic.
 
 """
 
-
 # Dictionary of Mac Patches.  Used to find the key in the global settings and the default value
-MAC_PATCH_DICT = {'Enable No Titlebar Patch' : ('-mac feature enable no titlebar patch-', False),
-                  'Disable Modal Windows' : ('-mac feature disable modal windows-', True),
-                  'Disable Grab Anywhere with Titlebar' : ('-mac feature disable grab anywhere with titlebar-', True),
-                  'Set Alpha Channel to 0.99 for MacOS >= 12.3' : ('-mac feature disable Alpha 0.99', True)}
+MAC_PATCH_DICT = {
+    'Enable No Titlebar Patch' : ('-mac feature enable no titlebar patch-', False),
+    'Disable Modal Windows' : ('-mac feature disable modal windows-', True),
+    'Disable Grab Anywhere with Titlebar' : ('-mac feature disable grab anywhere with titlebar-', True),
+    'Set Alpha Channel to 0.99 for MacOS >= 12.3' : ('-mac feature disable Alpha 0.99', True)
+}
 
 def _read_mac_global_settings():
     """
@@ -20790,19 +20697,26 @@ def main_mac_feature_control():
     current_theme = theme()
     theme('dark red')
 
-    layout = [[Text('Mac PySimpleGUI Feature Control', font='DEFAIULT 18')],
-              [Text('Use this window to enable / disable features.')],
-              [Text('Unfortunately, on some releases of tkinter on the Mac, there are problems that')],
-              [Text('create the need to enable and disable sets of features. This window facilitates the control.')],
-              [Text('Feature Control / Settings', font='_ 16 bold')],
-              [Text('You are running tkinter version:', font='_ 12 bold'), Text(framework_version, font='_ 12 bold')]]
+    layout = [
+        [Text('Mac PySimpleGUI Feature Control', font='DEFAIULT 18')],
+        [Text('Use this window to enable / disable features.')],
+        [Text('Unfortunately, on some releases of tkinter on the Mac, there are problems that')],
+        [Text('create the need to enable and disable sets of features. This window facilitates the control.')],
+        [Text('Feature Control / Settings', font='_ 16 bold')],
+        [Text('You are running tkinter version:', font='_ 12 bold'), Text(framework_version, font='_ 12 bold')]
+    ]
 
 
     for key, value in MAC_PATCH_DICT.items():
         layout += [[Checkbox(key, key=value[0], default_value=pysimplegui_user_settings.get(value[0], value[1]))]]
-    layout += [[Text('Currently the no titlebar patch ' + ('WILL' if _mac_should_apply_notitlebar_patch() else 'WILL NOT') + ' be applied')],
-               [Text('The no titlebar patch will ONLY be applied on tkinter versions < 8.6.10')]]
-    layout += [[Button('Ok'), Button('Cancel')]]
+    layout += [
+        [Text('Currently the no titlebar patch ' + ('WILL' if _mac_should_apply_notitlebar_patch() else 'WILL NOT') + ' be applied')],
+        [Text('The no titlebar patch will ONLY be applied on tkinter versions < 8.6.10')]
+    ]
+    layout += [[
+        Button('Ok'),
+        Button('Cancel')
+    ]]
 
     window = Window('Mac Feature Control', layout, keep_on_top=True, finalize=True )
     while True:
@@ -21054,15 +20968,6 @@ RED_X_BASE64 = b'iVBORw0KGgoAAAANSUhEUgAAAFoAAABaCAYAAAA4qEECAAAQ5ElEQVR4nO1ca3S
 GREEN_CHECK_BASE64 = b'iVBORw0KGgoAAAANSUhEUgAAAFoAAABaCAYAAAA4qEECAAAJV0lEQVR4nO2cTWwc5RnHf8/M7Dq7ttdxIIIUcqGA1BQU6Ac9VSkp0NwoJE5PJJygKki9tIIEO7ND3ICEeqJUJYcqCYdKDoS0lWgpH21KuVShH/TjUolLkIpKguO1vWvvfDw9zOxH1l8zjnc3Xs/vFEXy7uzPz/7f93nnGUNKSkpKSkpKSkpKSkpKzyFMYDKC2e0L2TjYGN2+hN5DkXoVP1s4wdjgDwB4jEw3L6u30CguAJzCCV4YUp4bUuzC94BlZaclHx9hPwb78bELp8jJQaa1yrx65OQljhSe4DguLy8uOxUdhzAuDE5HkvvlEWbVRcgSYDKnHnn5CXbhSR5fXHYqemXCSj6Nj1M4Qb88wrR6EMkUpC47Jy8yFsm2sa58kZSlUYTTUVw4hRPkjIPMBC6ySDwoioHPJrEo65M8W3qJx8hwHBdS0UujTZVcLJwkLweY0cUlN35GEQJyYlLRJ3BKP2UEk9P4qejFWTyTibGFq1V2ViwqPMXRqRcYwUgzupXmha9YOJlIMoSZ7ROQEZBgJ6DsQNKKbmZBJsvBFeOilQCPQbGo6Ens0qNRdARpRddollwsnAwXPq0mkgwug2Ixq69glx7Fjr4ZoGlFhyzM5KSVrLgMSIZZfQWndKBWyYBCuo9erhlJIrnKgJGhrKdwSgeYwGSiIRnS7V1Dci2Tp9XDuLLZWJZaJdcyOTw6DZCGZNjIFR0eEDVJNsKFL4lkIsllPVVf+BaRDBu1olfTjCzEpX/pTG5lI1Z0Q7JdOEVeDqwik0PJtUweWZjJrWws0VfbjISv4TJghJlcLB2sL3yLxEUzGyc62tiMsEwl19gYFd2OZiRGXDSzESq67c1IHHq7ojvUjMShlyu6Y81IHHqzojvcjMSh9yq6C81IHHqtorvSjMShd0R3sRmJQ29ER5ebkTjEE21j8EWE/fhr8aZrTFhvgoaZbBxgJqgiZBO8xsJMXqNKblzkStgYOAQL/n2tUB9UKfy8W81IHJbPaBsLh4DRgS8wVvgWDkHrBE5Xscni4Bk69H2GjEeY1fluNCNxWLqid2FxDo9nCp8ny/v0yQ1U/L04M2d4mQyPhxM4XSOaAio4N391Wqbf0ECHUQzixuEaNiNxWLyi7Ujy6OBtZHkPU25gTj2yxgSjAw8vNlvWUWwsjuMOjt30tWlj5k019HoChPiL+5o2I3FYeGFhXHg8PXg7A/I2yHaq6gMGJoopwpz/MOMzZ5tnyzpGdH2FwzffM52f+Y1qsAUXH4n9iMOaNyNxuFJ0TfIPB29jSN5BZDvz6iFR9SoayTZw/YdwZs52NEai68uPfu7uSt/sO4oOJ5KsTZVcLB1sx+5iKRqiJzDZj8/TQ7eQ1z9iyk3M68IP0ZAtzLGP8akz0aJUbeuVRpKH7G1fKlmz7yoMJZdsZKgEHcnkVsKMtuuT7LeS1/eXlAy12TLBVyXHBIcH9uJQbeszHJHk3OEbvzJllkPJVYLYkgO8cOELGs3I/s5JBpDGE0XDOzD9NzBl+5KSm1ECTMACZoN9HJt5vS2ZXYuLseu/XO5z30T1uqvO5A7FRTMG1JoQ/2fkje1UtIoR40MIBj7gAXnjDKMD3+Y47ppWdiQ5Yw/dVelzf5tYsi6x8HVYMoSig7Cqze9SDi6QkyxBzFY7lB2OqW4yXmds6KHlHphJxGNkcPAyo1t3ehbvqOr1CSV3rBmJQ6Oldib/ic9ufP2EPjHR2LKlIZtXGRvYy+O49cfEVkO0T87bW+9ys/PnFN0SO5MVRZlnQLJUgsYpXAcXvsVIvutYilpmmyjzwXc4OnOmfmyZhFpcjA7d7fbxFnAdbszrCKfthYJAqfNbuOVodIb78bGxeH7qI6b1XlQvRJXtxXolwcADAkyxjBMjE3YmPIBPcObdLHkTb5JMsk8WEZVJqyRPUiwdBOhWJrdypQQHDxuLF6b/w4zeh+oFsmLFjhEDAx9fTcm99u8Xz47YI1mKaCzZtWZpdPhOt4+3UN2aSHIGUzAuDTK4xytefimKLqFLmdzK4mcD9Q89eBsZOYcl2xLFSEDAgBjGvPHruz++Ze8H2z4If1FLHbHWK3n4TjfrncOQYaoxF76G5MlBb2BPyfn4zx1poBKy8uldmNl/wkwoO9paSdX45b4P79t7esfpsLJaZdclb97pZv3fIxK/rQ4IyGJIwPRgMLS75Fw435Xzlxgs/ZU+F8XI81MfUeLrBPoxfSTZjWSYVVezwYOv3vm718SRULA2/XJr3xw7f5e7Sd9GjPiSw0w2BJnMycCuknPhfG23Euv6OkycOyxXnuaJbGdO/VhNTUhY2WX9lRZLD9ZFFzFx8Hgqv5NB6y2QrVQTZrLIpZybeaDsXPxL/TqvUeLeM2zIzsu7GHJTbCnQfGp2ln+V9rEDwcHjUP8d5M0/APE7vkgyyKWcl9tTcT45f61LhiR3weuyC7eS5z1MuXE1mY2rZxgt7cUevgPLfw9hc+yFL8pk4HK+2n9f+eh/P1gPkiHpuMHVNzUeebGoBOdAbiebYIGtVzKXM17fva7z6d/Wi2RYzVzHSjcHViIgICcGnoIbdXIr0ZTJltu323X+9+F6kgyrHaBZ7HbXfIJJzXDnIkiMRkbxyYiJcDE/n9lTPnpx3cRFM6ufVGptavpkG+UEMRKHmmT4LFPJ3O8eu/Z3F0txdSNhTU2N5PmFCvfgaxDd9r86wn2yic9UxjV2ueOX/75eJcNazN5F00uCYBS3OH7OO0I54XBhK7WFT+Qz5oxvMD75j/UsGdZqyDE8NDLEEc90ho94m3yHirooVuL3UHyyYgKfUuYBjk2tq93FUqztNKmNJQ6e6WwZ9Tb5R6moF8mOR9PCl5njAXd86q+9IBnaMbYbyRZ782iQ11B2gLXiO9UkazBJ1byXdZ7JrbRjPlqww3MMoyF7+RipLXyBTlK1dvVCJrfSvkH0aILJKBaeCXIyHi2QC2XXFz4uMufvZny25yRDOx+tiP6iYVAs/YiKHiYvGcLhhMYdj3omy6e43v29Khk68WhF7SD+SOEQ/XIsWiBNlCBqRi4xL9/stUxupf0PCx2PRnyfLT3HrH+YnFgoLhlMVC9T9nb3uuTOUptgOlI4xI+HlKOFixzqvwNoejwiZW2oCS0WnuBw4Z4r/i9ljWkePUj/ZHubsbFSySkpKSkpKSkpKSkpKSkpKW3g/3+PYisYNf7zAAAAAElFTkSuQmCC'
 
 
-
-
-def _main_entry_point():
-    # print('Restarting main as a new process...(needed in case you want to GitHub Upgrade)')
-    # Relaunch using the same python interpreter that was used to run this function
-    interpreter = sys.executable
-    if 'pythonw' in interpreter:
-        interpreter = interpreter.replace('pythonw', 'python')
-    execute_py_file(__file__, interpreter_command=interpreter)
 
 
 

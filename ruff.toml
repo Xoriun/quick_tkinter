@@ -9,6 +9,8 @@ extend-ignore = ["PLR0913", "TD003", "Q000", "ERA001", "BLE001", "T201", "PLR091
 
 [lint.per-file-ignores]
 "PySimpleGUI - Copy.py" = ["ALL"]
+"*test.py" = ["ALL"]
+"**/*test*/*" = ["ALL"]
 
 [lint.extend-per-file-ignores]
 

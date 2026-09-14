@@ -26,7 +26,6 @@ from quick_tkinter import (
     Window,
     cprint,
     execute_command_subprocess,
-    execute_py_file,
     framework_version,
     popup,
     popup_quick_message,
@@ -230,6 +229,67 @@ def _copy_files_from_github():
 
 
     return package_version
+
+
+def execute_py_file(*, pyfile, parms=None, cwd=None, interpreter_command=None, wait=False, pipe_output=False, merge_stderr_with_stdout=True):
+    """
+    Executes a Python file.
+    The interpreter to use is chosen based on this priority order:
+        1. interpreter_command paramter
+        2. global setting "-python command-"
+        3. the interpreter running running PySimpleGUI
+    :param pyfile:                   the file to run
+    :type pyfile:                    (str)
+    :param parms:                    parameters to pass on the command line
+    :type parms:                     (str)
+    :param cwd:                      the working directory to use
+    :type cwd:                       (str)
+    :param interpreter_command:      the command used to invoke the Python interpreter
+    :type interpreter_command:       (str)
+    :param wait:                     the working directory to use
+    :type wait:                      (bool)
+    :param pipe_output:              If True then output from the subprocess will be piped. You MUST empty the pipe by calling execute_get_results or your subprocess will block until no longer full
+    :type pipe_output:               (bool)
+    :param merge_stderr_with_stdout: If True then output from the subprocess stderr will be merged with stdout. The result is ALL output will be on stdout.
+    :type merge_stderr_with_stdout:  (bool)
+    :return:                         Popen object
+    :rtype:                          (subprocess.Popen) | None
+    """
+
+    if cwd is None:
+        # if the specific file is not found (not an absolute path) then assume it's relative to '.'
+        if not os.path.exists(pyfile):
+            cwd = '.'
+
+    if pyfile[0] != '"' and ' ' in pyfile:
+        pyfile = '"' + pyfile + '"'
+    if interpreter_command is not None:
+        python_program = interpreter_command
+    else:
+        # use the version CURRENTLY RUNNING if nothing is specified. Previously used the one from the settings file
+        # ^ hmmm... that's not the code is doing now... it's getting the one from the settings file first
+        pysimplegui_user_settings.load()        # Refresh the settings just in case they've changed via another program
+        python_program = pysimplegui_user_settings.get('-python command-', '')
+        if python_program == '':        # if no interpreter set in the settings, then use the current one
+            python_program = sys.executable
+            # python_program = 'python' if running_windows() else 'python3'
+    if parms is not None and python_program:
+        sp = execute_command_subprocess(python_program, pyfile, parms, wait=wait, cwd=cwd, pipe_output=pipe_output, merge_stderr_with_stdout=merge_stderr_with_stdout)
+    elif python_program:
+        sp = execute_command_subprocess(python_program, pyfile, wait=wait, cwd=cwd, pipe_output=pipe_output, merge_stderr_with_stdout=merge_stderr_with_stdout)
+    else:
+        print('execute_py_file - No interpreter has been configured')
+        sp = None
+    return sp
+
+
+def _main_entry_point():
+    # print('Restarting main as a new process...(needed in case you want to GitHub Upgrade)')
+    # Relaunch using the same python interpreter that was used to run this function
+    interpreter = sys.executable
+    if 'pythonw' in interpreter:
+        interpreter = interpreter.replace('pythonw', 'python')
+    execute_py_file(__file__, interpreter_command=interpreter)
 
 
 def _the_github_upgrade_thread(window:Window, sp):
