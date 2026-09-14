@@ -13879,1192 +13879,1205 @@ def vbottom(elem_or_row, expand_x=None, expand_y=None, background_color=None):
     return Column(layout=[[elem_or_row]], pad=(0, 0), vertical_alignment='bottom', expand_x=expand_x, expand_y=expand_y,background_color=background_color)
 
 
-def Titlebar(title='', *, icon=None, text_color=None, background_color=None, font=None, key=None):
-    """
-    A custom titlebar that replaces the OS provided titlebar, thus giving you control
-    the is not possible using the OS provided titlebar such as the color.
+class Titlebar(Column):
+    def __init__(self, title='', *, icon=None, text_color=None, background_color=None, font=None, key=None):
+        """
+        A custom titlebar that replaces the OS provided titlebar, thus giving you control
+        the is not possible using the OS provided titlebar such as the color.
 
-    NOTE LINUX USERS - at the moment the minimize function is not yet working.  Windows users
-    should have no problem and it should function as a normal window would.
+        NOTE LINUX USERS - at the moment the minimize function is not yet working.  Windows users
+        should have no problem and it should function as a normal window would.
 
-    This titlebar is created from a row of elements that is then encapsulated into a
-    one Column element which is what this Titlebar function returns to you.
+        This titlebar is created from a row of elements that is then encapsulated into a
+        one Column element which is what this Titlebar function returns to you.
 
-    A custom titlebar removes the margins from your window.  If you want the  remainder
-    of your Window to have margins, place the layout after the Titlebar into a Column and
-    set the pad of that Column to the dimensions you would like your margins to have.
+        A custom titlebar removes the margins from your window.  If you want the  remainder
+        of your Window to have margins, place the layout after the Titlebar into a Column and
+        set the pad of that Column to the dimensions you would like your margins to have.
 
-    The Titlebar is a COLUMN element.  You can thus call the update method for the column and
-    perform operations such as making the column visible/invisible
+        The Titlebar is a COLUMN element.  You can thus call the update method for the column and
+        perform operations such as making the column visible/invisible
 
-    :param icon:             Can be either a filename or Base64 byte string of a PNG or GIF. This is used in an Image element to create the titlebar
-    :type icon:              str or bytes or None
-    :param title:            The "title" to show in the titlebar
-    :type title:             str
-    :param text_color:       Text color for titlebar
-    :type text_color:        str | None
-    :param background_color: Background color for titlebar
-    :type background_color:  str | None
-    :param font:             Font to be used for the text and the symbols
-    :type font:              (str or (str, int[, str]) or None)
-    :param key:              Identifies an Element. Should be UNIQUE to this window.
-    :type key:               str | int | tuple | object | None
-    :return:                 A single Column element that has eveything in 1 element
-    :rtype:                  Column
-    """
-    bc = background_color or CUSTOM_TITLEBAR_BACKGROUND_COLOR or theme_button_color()[1]
-    tc = text_color or CUSTOM_TITLEBAR_TEXT_COLOR or theme_button_color()[0]
-    font = font or CUSTOM_TITLEBAR_FONT or ('Helvetica', 12)
+        :param icon:             Can be either a filename or Base64 byte string of a PNG or GIF. This is used in an Image element to create the titlebar
+        :type icon:              str or bytes or None
+        :param title:            The "title" to show in the titlebar
+        :type title:             str
+        :param text_color:       Text color for titlebar
+        :type text_color:        str | None
+        :param background_color: Background color for titlebar
+        :type background_color:  str | None
+        :param font:             Font to be used for the text and the symbols
+        :type font:              (str or (str, int[, str]) or None)
+        :param key:              Identifies an Element. Should be UNIQUE to this window.
+        :type key:               str | int | tuple | object | None
+        :return:                 A single Column element that has eveything in 1 element
+        :rtype:                  Column
+        """
+        bc = background_color or CUSTOM_TITLEBAR_BACKGROUND_COLOR or theme_button_color()[1]
+        tc = text_color or CUSTOM_TITLEBAR_TEXT_COLOR or theme_button_color()[0]
+        font = font or CUSTOM_TITLEBAR_FONT or ('Helvetica', 12)
 
-    if isinstance(icon, bytes):
-        icon_and_text_portion = [Image(data=icon, background_color=bc, key=TITLEBAR_IMAGE_KEY)]
-    elif icon == TITLEBAR_DO_NOT_USE_AN_ICON:
-        icon_and_text_portion = []
-    elif icon is not None:
-        icon_and_text_portion = [Image(filename=icon, background_color=bc, key=TITLEBAR_IMAGE_KEY)]
-    elif CUSTOM_TITLEBAR_ICON is not None:
-        if isinstance(CUSTOM_TITLEBAR_ICON, bytes):
-            icon_and_text_portion = [Image(data=CUSTOM_TITLEBAR_ICON, background_color=bc, key=TITLEBAR_IMAGE_KEY)]
+        if isinstance(icon, bytes):
+            icon_and_text_portion = [Image(data=icon, background_color=bc, key=TITLEBAR_IMAGE_KEY)]
+        elif icon == TITLEBAR_DO_NOT_USE_AN_ICON:
+            icon_and_text_portion = []
+        elif icon is not None:
+            icon_and_text_portion = [Image(filename=icon, background_color=bc, key=TITLEBAR_IMAGE_KEY)]
+        elif CUSTOM_TITLEBAR_ICON is not None:
+            if isinstance(CUSTOM_TITLEBAR_ICON, bytes):
+                icon_and_text_portion = [Image(data=CUSTOM_TITLEBAR_ICON, background_color=bc, key=TITLEBAR_IMAGE_KEY)]
+            else:
+                icon_and_text_portion = [Image(filename=CUSTOM_TITLEBAR_ICON, background_color=bc, key=TITLEBAR_IMAGE_KEY)]
         else:
-            icon_and_text_portion = [Image(filename=CUSTOM_TITLEBAR_ICON, background_color=bc, key=TITLEBAR_IMAGE_KEY)]
-    else:
-        icon_and_text_portion = [Image(data=DEFAULT_BASE64_ICON_16_BY_16, background_color=bc, key=TITLEBAR_IMAGE_KEY)]
+            icon_and_text_portion = [Image(data=DEFAULT_BASE64_ICON_16_BY_16, background_color=bc, key=TITLEBAR_IMAGE_KEY)]
 
-    icon_and_text_portion += [Text(title, text_color=tc, background_color=bc, font=font, grab=True, key=TITLEBAR_TEXT_KEY)]
+        icon_and_text_portion += [Text(title, text_color=tc, background_color=bc, font=font, grab=True, key=TITLEBAR_TEXT_KEY)]
 
-    return Column(
-        layout=[[
-            Column(layout=[icon_and_text_portion], pad=(0, 0), background_color=bc),
-            Column(
-                layout=[[
-                    Text(SYMBOLS.TITLEBAR_MINIMIZE, text_color=tc, background_color=bc, enable_events=True, font=font, key=TITLEBAR_MINIMIZE_KEY),
-                    Text(SYMBOLS.TITLEBAR_MAXIMIZE, text_color=tc, background_color=bc, enable_events=True, font=font, key=TITLEBAR_MAXIMIZE_KEY),
-                    Text(SYMBOLS.TITLEBAR_CLOSE, text_color=tc, background_color=bc, font=font, enable_events=True, key=TITLEBAR_CLOSE_KEY)
-                ]],
-                element_justification='r', expand_x=True, grab=True, pad=(0, 0), background_color=bc
-            )
-        ]],
-        expand_x=True, grab=True, background_color=bc, pad=(0, 0), metadata=TITLEBAR_METADATA_MARKER, key=key
-    )
+        super().__init__(
+            layout=[[
+                Column(layout=[icon_and_text_portion], pad=(0, 0), background_color=bc),
+                Column(
+                    layout=[[
+                        Text(SYMBOLS.TITLEBAR_MINIMIZE, text_color=tc, background_color=bc, enable_events=True, font=font, key=TITLEBAR_MINIMIZE_KEY),
+                        Text(SYMBOLS.TITLEBAR_MAXIMIZE, text_color=tc, background_color=bc, enable_events=True, font=font, key=TITLEBAR_MAXIMIZE_KEY),
+                        Text(SYMBOLS.TITLEBAR_CLOSE,    text_color=tc, background_color=bc, enable_events=True, font=font, key=TITLEBAR_CLOSE_KEY)
+                    ]],
+                    element_justification='r',
+                    expand_x=True,
+                    grab=True,
+                    pad=(0, 0),
+                    background_color=bc
+                )
+            ]],
+            expand_x=True,
+            grab=True,
+            background_color=bc,
+            pad=(0, 0),
+            metadata=TITLEBAR_METADATA_MARKER,
+            key=key
+        )
 
 
-def MenubarCustom(menu_definition, *, disabled_text_color=None, bar_font=None, font=None, tearoff=False, pad=0, background_color=None, text_color=None,
+class MenubarCustom(Column):
+    def __init__(self, menu_definition, *, disabled_text_color=None, bar_font=None, font=None, tearoff=False, pad=0, background_color=None, text_color=None,
                   bar_background_color=None, bar_text_color=None, key=None):
-    """
-    A custom Menubar that replaces the OS provided Menubar
+        """
+        A custom Menubar that replaces the OS provided Menubar
 
-    Why?
-    Two reasons - 1. they look great (see custom titlebar) 2. if you have a custom titlebar, then you have to use a custom menubar if you want a menubar
+        Why?
+        Two reasons - 1. they look great (see custom titlebar) 2. if you have a custom titlebar, then you have to use a custom menubar if you want a menubar
 
-    :param menu_definition:      The Menu definition specified using lists (docs explain the format)
-    :type menu_definition:       List[List[Tuple[str, List[str]]]
-    :param disabled_text_color:  color to use for text when item is disabled. Can be in #RRGGBB format or a color name "black"
-    :type disabled_text_color:   (str)
-    :param bar_font:             specifies the font family, size to be used for the chars in the bar itself
-    :type bar_font:              (str or (str, int[, str]) or None)
-    :param font:                 specifies the font family, size to be used for the menu items
-    :type font:                  (str or (str, int[, str]) or None)
-    :param tearoff:              if True, then can tear the menu off from the window ans use as a floating window. Very cool effect
-    :type tearoff:               (bool)
-    :param pad:                  Amount of padding to put around element in pixels (left/right, top/bottom) or ((left, right), (top, bottom)) or an int. If an int, then it's converted into a tuple (int, int).  TIP - 0 will make flush with titlebar
-    :type pad:                   (int, int) or ((int, int),(int,int)) or (int,(int,int)) or  ((int, int),int) | int
-    :param background_color:     color to use for background of the menus that are displayed after making a section. Can be in #RRGGBB format or a color name "black". Defaults to the color of the bar text
-    :type background_color:      (str)
-    :param text_color:           color to use for the text of the many items in the displayed menus. Can be in #RRGGBB format or a color name "black". Defaults to the bar background
-    :type text_color:            (str)
-    :param bar_background_color: color to use for the menubar. Can be in #RRGGBB format or a color name "black". Defaults to theme's button text color
-    :type bar_background_color:  (str)
-    :param bar_text_color:       color to use for the menu items text when item is disabled. Can be in #RRGGBB format or a color name "black". Defaults to theme's button background color
-    :type bar_text_color:        (str)
-    :param key:                  Value that uniquely identifies this element from all other elements. Used when Finding an element or in return values. Must be unique to the window
-    :type key:                   str | int | tuple | object
-    :returns:                    A Column element that has a series of ButtonMenu elements
-    :rtype:                      Column
-    """
+        :param menu_definition:      The Menu definition specified using lists (docs explain the format)
+        :type menu_definition:       List[List[Tuple[str, List[str]]]
+        :param disabled_text_color:  color to use for text when item is disabled. Can be in #RRGGBB format or a color name "black"
+        :type disabled_text_color:   (str)
+        :param bar_font:             specifies the font family, size to be used for the chars in the bar itself
+        :type bar_font:              (str or (str, int[, str]) or None)
+        :param font:                 specifies the font family, size to be used for the menu items
+        :type font:                  (str or (str, int[, str]) or None)
+        :param tearoff:              if True, then can tear the menu off from the window ans use as a floating window. Very cool effect
+        :type tearoff:               (bool)
+        :param pad:                  Amount of padding to put around element in pixels (left/right, top/bottom) or ((left, right), (top, bottom)) or an int. If an int, then it's converted into a tuple (int, int).  TIP - 0 will make flush with titlebar
+        :type pad:                   (int, int) or ((int, int),(int,int)) or (int,(int,int)) or  ((int, int),int) | int
+        :param background_color:     color to use for background of the menus that are displayed after making a section. Can be in #RRGGBB format or a color name "black". Defaults to the color of the bar text
+        :type background_color:      (str)
+        :param text_color:           color to use for the text of the many items in the displayed menus. Can be in #RRGGBB format or a color name "black". Defaults to the bar background
+        :type text_color:            (str)
+        :param bar_background_color: color to use for the menubar. Can be in #RRGGBB format or a color name "black". Defaults to theme's button text color
+        :type bar_background_color:  (str)
+        :param bar_text_color:       color to use for the menu items text when item is disabled. Can be in #RRGGBB format or a color name "black". Defaults to theme's button background color
+        :type bar_text_color:        (str)
+        :param key:                  Value that uniquely identifies this element from all other elements. Used when Finding an element or in return values. Must be unique to the window
+        :type key:                   str | int | tuple | object
+        :returns:                    A Column element that has a series of ButtonMenu elements
+        :rtype:                      Column
+        """
 
-    bar_bg = bar_background_color if bar_background_color is not None else theme_button_color()[0]
-    bar_text = bar_text_color if bar_text_color is not None else theme_button_color()[1]
-    menu_bg = background_color if background_color is not None else bar_text
-    menu_text = text_color if text_color is not None else bar_bg
+        bar_bg = bar_background_color if bar_background_color is not None else theme_button_color()[0]
+        bar_text = bar_text_color if bar_text_color is not None else theme_button_color()[1]
+        menu_bg = background_color if background_color is not None else bar_text
+        menu_text = text_color if text_color is not None else bar_bg
 
-    row = []
-    for menu in menu_definition:
-        text = menu[0]
-        if Menu.SHORTCUT_CHARACTER in text:
-            text = text.replace(Menu.SHORTCUT_CHARACTER, '')
-        if text.startswith(Menu.DISABLED_CHARACTER):
-            disabled = True
-            text = text[len(Menu.DISABLED_CHARACTER):]
-        else:
-            disabled = False
+        row = []
+        for menu in menu_definition:
+            text = menu[0]
+            if Menu.SHORTCUT_CHARACTER in text:
+                text = text.replace(Menu.SHORTCUT_CHARACTER, '')
+            if text.startswith(Menu.DISABLED_CHARACTER):
+                disabled = True
+                text = text[len(Menu.DISABLED_CHARACTER):]
+            else:
+                disabled = False
 
-        button_menu = ButtonMenu(text, menu, border_width=0, button_color=(bar_text, bar_bg), key=text, pad=(0, 0), disabled=disabled, font=bar_font,
-                                 item_font=font, disabled_text_color=disabled_text_color, text_color=menu_text, background_color=menu_bg, tearoff=tearoff)
-        button_menu.part_of_custom_menubar = True
-        button_menu.custom_menubar_key = key
-        row += [button_menu]
-    return Column(layout=[row], pad=pad, background_color=bar_bg, expand_x=True, key=key)
+            button_menu = ButtonMenu(text, menu, border_width=0, button_color=(bar_text, bar_bg), key=text, pad=(0, 0), disabled=disabled, font=bar_font,
+                                    item_font=font, disabled_text_color=disabled_text_color, text_color=menu_text, background_color=menu_bg, tearoff=tearoff)
+            button_menu.part_of_custom_menubar = True
+            button_menu.custom_menubar_key = key
+            row += [button_menu]
+        super().__init__(layout=[row], pad=pad, background_color=bar_bg, expand_x=True, key=key)
 
 
 # -------------------------  FOLDER BROWSE Element lazy function  ------------------------- #
-def FolderBrowse(button_text='Browse', *, target=(ThisRow, -1), initial_folder=None, tooltip=None, size=(None, None),
+class FolderBrowse(Button):
+    def __init__(self, button_text='Browse', *, target=(ThisRow, -1), initial_folder=None, tooltip=None, size=(None, None),
                  auto_size_button=None, button_color=None, disabled=False, enable_events=False,
                  font=None, pad=None, key=None, visible=True, metadata=None, expand_x=False, expand_y=False):
-    """
-    :param button_text:      text in the button (Default value = 'Browse')
-    :type button_text:       (str)
-    :param target:           target for the button (Default value = (ThisRow, -1))
-    :type target:            str | (int, int)
-    :param initial_folder:   starting path for folders and files
-    :type initial_folder:    (str)
-    :param tooltip:          text, that will appear when mouse hovers over the element
-    :type tooltip:           (str)
-    :param size:             (w,h) w=characters-wide, h=rows-high
-    :type size:              (int, int)
-    :param auto_size_button: True if button size is determined by button text
-    :type auto_size_button:  (bool)
-    :param button_color:     button color (foreground, background)
-    :type button_color:      (str, str) | str
-    :param disabled:         set disable state for element (Default = False)
-    :type disabled:          (bool)
-    :param enable_events:    Turns on the element specific events.(Default = False)
-    :type enable_events:     (bool)
-    :param font:             specifies the  font family, size, etc. Tuple or Single string format 'name size styles'. Styles: italic * roman bold normal underline overstrike
-    :type font:              (str or (str, int[, str]) or None)
-    :param pad:              Amount of padding to put around element in pixels (left/right, top/bottom) or ((left, right), (top, bottom)) or an int. If an int, then it's converted into a tuple (int, int)
-    :type pad:               (int, int) or ((int, int),(int,int)) or (int,(int,int)) or  ((int, int),int) | int
-    :param key:              Used with window.find_element and with return values to uniquely identify this element
-    :type key:               str | int | tuple | object
-    :param visible:          set initial visibility state of the Button
-    :type visible:           (bool)
-    :param metadata:         Anything you want to store along with this button
-    :type metadata:          (Any)
-    :param expand_x:         If True Element will expand in the Horizontal directions
-    :type expand_x:          (bool)
-    :param expand_y:         If True Element will expand in the Vertical directions
-    :type expand_y:          (bool)
-    :return:                 The Button created
-    :rtype:                  (Button)
-    """
+        """
+        :param button_text:      text in the button (Default value = 'Browse')
+        :type button_text:       (str)
+        :param target:           target for the button (Default value = (ThisRow, -1))
+        :type target:            str | (int, int)
+        :param initial_folder:   starting path for folders and files
+        :type initial_folder:    (str)
+        :param tooltip:          text, that will appear when mouse hovers over the element
+        :type tooltip:           (str)
+        :param size:             (w,h) w=characters-wide, h=rows-high
+        :type size:              (int, int)
+        :param auto_size_button: True if button size is determined by button text
+        :type auto_size_button:  (bool)
+        :param button_color:     button color (foreground, background)
+        :type button_color:      (str, str) | str
+        :param disabled:         set disable state for element (Default = False)
+        :type disabled:          (bool)
+        :param enable_events:    Turns on the element specific events.(Default = False)
+        :type enable_events:     (bool)
+        :param font:             specifies the  font family, size, etc. Tuple or Single string format 'name size styles'. Styles: italic * roman bold normal underline overstrike
+        :type font:              (str or (str, int[, str]) or None)
+        :param pad:              Amount of padding to put around element in pixels (left/right, top/bottom) or ((left, right), (top, bottom)) or an int. If an int, then it's converted into a tuple (int, int)
+        :type pad:               (int, int) or ((int, int),(int,int)) or (int,(int,int)) or  ((int, int),int) | int
+        :param key:              Used with window.find_element and with return values to uniquely identify this element
+        :type key:               str | int | tuple | object
+        :param visible:          set initial visibility state of the Button
+        :type visible:           (bool)
+        :param metadata:         Anything you want to store along with this button
+        :type metadata:          (Any)
+        :param expand_x:         If True Element will expand in the Horizontal directions
+        :type expand_x:          (bool)
+        :param expand_y:         If True Element will expand in the Vertical directions
+        :type expand_y:          (bool)
+        :return:                 The Button created
+        :rtype:                  (Button)
+        """
 
-    return Button(button_text=button_text, button_type=Button.TYPE.BROWSE_FOLDER, target=target,
-                  initial_folder=initial_folder, tooltip=tooltip, size=size, auto_size_button=auto_size_button,
-                  disabled=disabled, button_color=button_color,
-                  enable_events=enable_events, font=font, pad=pad, key=key, visible=visible, metadata=metadata, expand_x=expand_x, expand_y=expand_y)
+        super().__init__(button_text=button_text, button_type=Button.TYPE.BROWSE_FOLDER, target=target,
+                    initial_folder=initial_folder, tooltip=tooltip, size=size, auto_size_button=auto_size_button,
+                    disabled=disabled, button_color=button_color,
+                    enable_events=enable_events, font=font, pad=pad, key=key, visible=visible, metadata=metadata, expand_x=expand_x, expand_y=expand_y)
 
 
 # -------------------------  FILE BROWSE Element lazy function  ------------------------- #
-def FileBrowse(button_text='Browse', *, target=(ThisRow, -1), file_types=FILE_TYPES_ALL_FILES, initial_folder=None,
+class FileBrowse(Button):
+    def __init__(self, button_text='Browse', *, target=(ThisRow, -1), file_types=FILE_TYPES_ALL_FILES, initial_folder=None,
                tooltip=None, size=(None, None), auto_size_button=None, button_color=None,
                enable_events=False, font=None, disabled=False,
                pad=None, key=None, visible=True, metadata=None, expand_x=False, expand_y=False):
-    """
-
-    :param button_text:      text in the button (Default value = 'Browse')
-    :type button_text:       (str)
-    :param target:           key or (row,col) target for the button (Default value = (ThisRow, -1))
-    :type target:            str | (int, int)
-    :param file_types:       filter file types Default value = (("ALL Files", "*.* *"),).
-    :type file_types:        Tuple[(str, str), ...]
-    :param initial_folder:   starting path for folders and files
-    :type initial_folder:
-    :param tooltip:          text, that will appear when mouse hovers over the element
-    :type tooltip:           (str)
-    :param size:             (w,h) w=characters-wide, h=rows-high
-    :type size:              (int, int)
-    :param auto_size_button: True if button size is determined by button text
-    :type auto_size_button:  (bool)
-    :param button_color:     button color (foreground, background)
-    :type button_color:      (str, str) | str
-    :param enable_events:    Turns on the element specific events.(Default = False)
-    :type enable_events:     (bool)
-    :param font:             specifies the  font family, size, etc. Tuple or Single string format 'name size styles'. Styles: italic * roman bold normal underline overstrike
-    :type font:              (str or (str, int[, str]) or None)
-    :param disabled:         set disable state for element (Default = False)
-    :type disabled:          (bool)
-    :param pad:              Amount of padding to put around element in pixels (left/right, top/bottom) or ((left, right), (top, bottom)) or an int. If an int, then it's converted into a tuple (int, int)
-    :type pad:               (int, int) or ((int, int),(int,int)) or (int,(int,int)) or  ((int, int),int) | int
-    :param key:              key for uniquely identify this element (for window.find_element)
-    :type key:               str | int | tuple | object
-    :param visible:          set initial visibility state of the Button
-    :type visible:           (bool)
-    :param metadata:         Anything you want to store along with this button
-    :type metadata:          (Any)
-    :param expand_x:         If True Element will expand in the Horizontal directions
-    :type expand_x:          (bool)
-    :param expand_y:         If True Element will expand in the Vertical directions
-    :type expand_y:          (bool)
-    :return:                 returns a button
-    :rtype:                  (Button)
-    """
-    return Button(button_text=button_text, button_type=Button.TYPE.BROWSE_FILE, target=target, file_types=file_types,
-                  initial_folder=initial_folder, tooltip=tooltip, size=size, auto_size_button=auto_size_button,
-                  enable_events=enable_events, disabled=disabled,
-                  button_color=button_color, font=font, pad=pad, key=key, visible=visible, metadata=metadata, expand_x=expand_x, expand_y=expand_y)
+        """
+        :param button_text:      text in the button (Default value = 'Browse')
+        :type button_text:       (str)
+        :param target:           key or (row,col) target for the button (Default value = (ThisRow, -1))
+        :type target:            str | (int, int)
+        :param file_types:       filter file types Default value = (("ALL Files", "*.* *"),).
+        :type file_types:        Tuple[(str, str), ...]
+        :param initial_folder:   starting path for folders and files
+        :type initial_folder:
+        :param tooltip:          text, that will appear when mouse hovers over the element
+        :type tooltip:           (str)
+        :param size:             (w,h) w=characters-wide, h=rows-high
+        :type size:              (int, int)
+        :param auto_size_button: True if button size is determined by button text
+        :type auto_size_button:  (bool)
+        :param button_color:     button color (foreground, background)
+        :type button_color:      (str, str) | str
+        :param enable_events:    Turns on the element specific events.(Default = False)
+        :type enable_events:     (bool)
+        :param font:             specifies the  font family, size, etc. Tuple or Single string format 'name size styles'. Styles: italic * roman bold normal underline overstrike
+        :type font:              (str or (str, int[, str]) or None)
+        :param disabled:         set disable state for element (Default = False)
+        :type disabled:          (bool)
+        :param pad:              Amount of padding to put around element in pixels (left/right, top/bottom) or ((left, right), (top, bottom)) or an int. If an int, then it's converted into a tuple (int, int)
+        :type pad:               (int, int) or ((int, int),(int,int)) or (int,(int,int)) or  ((int, int),int) | int
+        :param key:              key for uniquely identify this element (for window.find_element)
+        :type key:               str | int | tuple | object
+        :param visible:          set initial visibility state of the Button
+        :type visible:           (bool)
+        :param metadata:         Anything you want to store along with this button
+        :type metadata:          (Any)
+        :param expand_x:         If True Element will expand in the Horizontal directions
+        :type expand_x:          (bool)
+        :param expand_y:         If True Element will expand in the Vertical directions
+        :type expand_y:          (bool)
+        :return:                 returns a button
+        :rtype:                  (Button)
+        """
+        super().__init__(button_text=button_text, button_type=Button.TYPE.BROWSE_FILE, target=target, file_types=file_types,
+                    initial_folder=initial_folder, tooltip=tooltip, size=size, auto_size_button=auto_size_button,
+                    enable_events=enable_events, disabled=disabled,
+                    button_color=button_color, font=font, pad=pad, key=key, visible=visible, metadata=metadata, expand_x=expand_x, expand_y=expand_y)
 
 
 # -------------------------  FILES BROWSE Element (Multiple file selection) lazy function  ------------------------- #
-def FilesBrowse(button_text='Browse', *, target=(ThisRow, -1), file_types=FILE_TYPES_ALL_FILES, disabled=False,
+class FilesBrowse(Button):
+    def __init__(self, button_text='Browse', *, target=(ThisRow, -1), file_types=FILE_TYPES_ALL_FILES, disabled=False,
                 initial_folder=None, tooltip=None, size=(None, None), auto_size_button=None, button_color=None,
                 enable_events=False,
                 font=None, pad=None, key=None, visible=True, files_delimiter=BROWSE_FILES_DELIMITER, metadata=None, expand_x=False, expand_y=False):
-    """
-    Allows browsing of multiple files. File list is returned as a single list with the delimiter defined using the files_delimiter parameter.
+        """
+        Allows browsing of multiple files. File list is returned as a single list with the delimiter defined using the files_delimiter parameter.
 
-    :param button_text:      text in the button (Default value = 'Browse')
-    :type button_text:       (str)
-    :param target:           key or (row,col) target for the button (Default value = (ThisRow, -1))
-    :type target:            str | (int, int)
-    :param file_types:       Default value = (("ALL Files", "*.* *"),).
-    :type file_types:        Tuple[(str, str), ...]
-    :param disabled:         set disable state for element (Default = False)
-    :type disabled:          (bool)
-    :param initial_folder:   starting path for folders and files
-    :type initial_folder:    (str)
-    :param tooltip:          text, that will appear when mouse hovers over the element
-    :type tooltip:           (str)
-    :param size:             (w,h) w=characters-wide, h=rows-high
-    :type size:              (int, int)
-    :param auto_size_button: True if button size is determined by button text
-    :type auto_size_button:  (bool)
-    :param button_color:     button color (foreground, background)
-    :type button_color:      (str, str) | str
-    :param enable_events:    Turns on the element specific events.(Default = False)
-    :type enable_events:     (bool)
-    :param font:             specifies the  font family, size, etc. Tuple or Single string format 'name size styles'. Styles: italic * roman bold normal underline overstrike
-    :type font:              (str or (str, int[, str]) or None)
-    :param pad:              Amount of padding to put around element in pixels (left/right, top/bottom) or ((left, right), (top, bottom)) or an int. If an int, then it's converted into a tuple (int, int)
-    :type pad:               (int, int) or ((int, int),(int,int)) or (int,(int,int)) or  ((int, int),int) | int
-    :param key:              key for uniquely identify this element (for window.find_element)
-    :type key:               str | int | tuple | object
-    :param visible:          set initial visibility state of the Button
-    :type visible:           (bool)
-    :param files_delimiter:  String to place between files when multiple files are selected. Normally a ;
-    :type files_delimiter:   str
-    :param metadata:         Anything you want to store along with this button
-    :type metadata:          (Any)
-    :param expand_x:         If True Element will expand in the Horizontal directions
-    :type expand_x:          (bool)
-    :param expand_y:         If True Element will expand in the Vertical directions
-    :type expand_y:          (bool)
-    :return:                 returns a button
-    :rtype:                  (Button)
-    """
-    button = Button(button_text=button_text, button_type=Button.TYPE.BROWSE_FILES, target=target, file_types=file_types,
-                    initial_folder=initial_folder, enable_events=enable_events,
-                    tooltip=tooltip, size=size, auto_size_button=auto_size_button,
-                    disabled=disabled, button_color=button_color, font=font, pad=pad, key=key, visible=visible, metadata=metadata, expand_x=expand_x, expand_y=expand_y)
-    button._files_delimiter = files_delimiter
-    return button
+        :param button_text:      text in the button (Default value = 'Browse')
+        :type button_text:       (str)
+        :param target:           key or (row,col) target for the button (Default value = (ThisRow, -1))
+        :type target:            str | (int, int)
+        :param file_types:       Default value = (("ALL Files", "*.* *"),).
+        :type file_types:        Tuple[(str, str), ...]
+        :param disabled:         set disable state for element (Default = False)
+        :type disabled:          (bool)
+        :param initial_folder:   starting path for folders and files
+        :type initial_folder:    (str)
+        :param tooltip:          text, that will appear when mouse hovers over the element
+        :type tooltip:           (str)
+        :param size:             (w,h) w=characters-wide, h=rows-high
+        :type size:              (int, int)
+        :param auto_size_button: True if button size is determined by button text
+        :type auto_size_button:  (bool)
+        :param button_color:     button color (foreground, background)
+        :type button_color:      (str, str) | str
+        :param enable_events:    Turns on the element specific events.(Default = False)
+        :type enable_events:     (bool)
+        :param font:             specifies the  font family, size, etc. Tuple or Single string format 'name size styles'. Styles: italic * roman bold normal underline overstrike
+        :type font:              (str or (str, int[, str]) or None)
+        :param pad:              Amount of padding to put around element in pixels (left/right, top/bottom) or ((left, right), (top, bottom)) or an int. If an int, then it's converted into a tuple (int, int)
+        :type pad:               (int, int) or ((int, int),(int,int)) or (int,(int,int)) or  ((int, int),int) | int
+        :param key:              key for uniquely identify this element (for window.find_element)
+        :type key:               str | int | tuple | object
+        :param visible:          set initial visibility state of the Button
+        :type visible:           (bool)
+        :param files_delimiter:  String to place between files when multiple files are selected. Normally a ;
+        :type files_delimiter:   str
+        :param metadata:         Anything you want to store along with this button
+        :type metadata:          (Any)
+        :param expand_x:         If True Element will expand in the Horizontal directions
+        :type expand_x:          (bool)
+        :param expand_y:         If True Element will expand in the Vertical directions
+        :type expand_y:          (bool)
+        :return:                 returns a button
+        :rtype:                  (Button)
+        """
+        super().__init__(button_text=button_text, button_type=Button.TYPE.BROWSE_FILES, target=target, file_types=file_types,
+                        initial_folder=initial_folder, enable_events=enable_events,
+                        tooltip=tooltip, size=size, auto_size_button=auto_size_button,
+                        disabled=disabled, button_color=button_color, font=font, pad=pad, key=key, visible=visible, metadata=metadata, expand_x=expand_x, expand_y=expand_y)
+        self._files_delimiter = files_delimiter
 
 
 # -------------------------  FILE BROWSE Element lazy function  ------------------------- #
-def FileSaveAs(button_text='Save As...', *, target=(ThisRow, -1), file_types=FILE_TYPES_ALL_FILES, initial_folder=None,
+class FileSaveAs(Button):
+    def __init__(self, button_text='Save As...', *, target=(ThisRow, -1), file_types=FILE_TYPES_ALL_FILES, initial_folder=None,
                default_extension='', disabled=False, tooltip=None, size=(None, None), auto_size_button=None, button_color=None,
                enable_events=False, font=None,
                pad=None, key=None, visible=True, metadata=None, expand_x=False, expand_y=False):
-    """
-
-    :param button_text:       text in the button (Default value = 'Save As...')
-    :type button_text:        (str)
-    :param target:            key or (row,col) target for the button (Default value = (ThisRow, -1))
-    :type target:             str | (int, int)
-    :param file_types:        Default value = (("ALL Files", "*.* *"),).
-    :type file_types:         Tuple[(str, str), ...]
-    :param default_extension: If no extension entered by user, add this to filename (only used in saveas dialogs)
-    :type default_extension:  (str)
-    :param initial_folder:    starting path for folders and files
-    :type initial_folder:     (str)
-    :param disabled:          set disable state for element (Default = False)
-    :type disabled:           (bool)
-    :param tooltip:           text, that will appear when mouse hovers over the element
-    :type tooltip:            (str)
-    :param size:              (w,h) w=characters-wide, h=rows-high
-    :type size:               (int, int)
-    :param auto_size_button:  True if button size is determined by button text
-    :type auto_size_button:   (bool)
-    :param button_color:      button color (foreground, background)
-    :type button_color:       (str, str) | str
-    :param enable_events:     Turns on the element specific events.(Default = False)
-    :type enable_events:      (bool)
-    :param font:              specifies the  font family, size, etc. Tuple or Single string format 'name size styles'. Styles: italic * roman bold normal underline overstrike
-    :type font:               (str or (str, int[, str]) or None)
-    :param pad:               Amount of padding to put around element in pixels (left/right, top/bottom) or ((left, right), (top, bottom)) or an int. If an int, then it's converted into a tuple (int, int)
-    :type pad:                (int, int) or ((int, int),(int,int)) or (int,(int,int)) or  ((int, int),int) | int
-    :param key:               key for uniquely identify this element (for window.find_element)
-    :type key:                str | int | tuple | object
-    :param visible:           set initial visibility state of the Button
-    :type visible:            (bool)
-    :param metadata:          Anything you want to store along with this button
-    :type metadata:           (Any)
-    :param expand_x:          If True Element will expand in the Horizontal directions
-    :type expand_x:           (bool)
-    :param expand_y:          If True Element will expand in the Vertical directions
-    :type expand_y:           (bool)        :return:                  returns a button
-    :rtype:                   (Button)
-    """
-    return Button(button_text=button_text, button_type=Button.TYPE.SAVEAS_FILE, target=target, file_types=file_types,
-                  initial_folder=initial_folder, default_extension=default_extension, tooltip=tooltip, size=size, disabled=disabled,
-                  auto_size_button=auto_size_button, button_color=button_color,
-                  enable_events=enable_events, font=font, pad=pad, key=key, visible=visible, metadata=metadata, expand_x=expand_x, expand_y=expand_y)
+        """
+        :param button_text:       text in the button (Default value = 'Save As...')
+        :type button_text:        (str)
+        :param target:            key or (row,col) target for the button (Default value = (ThisRow, -1))
+        :type target:             str | (int, int)
+        :param file_types:        Default value = (("ALL Files", "*.* *"),).
+        :type file_types:         Tuple[(str, str), ...]
+        :param default_extension: If no extension entered by user, add this to filename (only used in saveas dialogs)
+        :type default_extension:  (str)
+        :param initial_folder:    starting path for folders and files
+        :type initial_folder:     (str)
+        :param disabled:          set disable state for element (Default = False)
+        :type disabled:           (bool)
+        :param tooltip:           text, that will appear when mouse hovers over the element
+        :type tooltip:            (str)
+        :param size:              (w,h) w=characters-wide, h=rows-high
+        :type size:               (int, int)
+        :param auto_size_button:  True if button size is determined by button text
+        :type auto_size_button:   (bool)
+        :param button_color:      button color (foreground, background)
+        :type button_color:       (str, str) | str
+        :param enable_events:     Turns on the element specific events.(Default = False)
+        :type enable_events:      (bool)
+        :param font:              specifies the  font family, size, etc. Tuple or Single string format 'name size styles'. Styles: italic * roman bold normal underline overstrike
+        :type font:               (str or (str, int[, str]) or None)
+        :param pad:               Amount of padding to put around element in pixels (left/right, top/bottom) or ((left, right), (top, bottom)) or an int. If an int, then it's converted into a tuple (int, int)
+        :type pad:                (int, int) or ((int, int),(int,int)) or (int,(int,int)) or  ((int, int),int) | int
+        :param key:               key for uniquely identify this element (for window.find_element)
+        :type key:                str | int | tuple | object
+        :param visible:           set initial visibility state of the Button
+        :type visible:            (bool)
+        :param metadata:          Anything you want to store along with this button
+        :type metadata:           (Any)
+        :param expand_x:          If True Element will expand in the Horizontal directions
+        :type expand_x:           (bool)
+        :param expand_y:          If True Element will expand in the Vertical directions
+        :type expand_y:           (bool)        :return:                  returns a button
+        :rtype:                   (Button)
+        """
+        super().__init__(button_text=button_text, button_type=Button.TYPE.SAVEAS_FILE, target=target, file_types=file_types,
+                    initial_folder=initial_folder, default_extension=default_extension, tooltip=tooltip, size=size, disabled=disabled,
+                    auto_size_button=auto_size_button, button_color=button_color,
+                    enable_events=enable_events, font=font, pad=pad, key=key, visible=visible, metadata=metadata, expand_x=expand_x, expand_y=expand_y)
 
 
 # -------------------------  SAVE AS Element lazy function  ------------------------- #
-def SaveAs(button_text='Save As...', *, target=(ThisRow, -1), file_types=FILE_TYPES_ALL_FILES, initial_folder=None, default_extension='',
+class SaveAs(Button):
+    def __init__(self, button_text='Save As...', *, target=(ThisRow, -1), file_types=FILE_TYPES_ALL_FILES, initial_folder=None, default_extension='',
            disabled=False, tooltip=None, size=(None, None), auto_size_button=None, button_color=None,
            enable_events=False, font=None,
            pad=None, key=None, visible=True, metadata=None, expand_x=False, expand_y=False):
-    """
-
-    :param button_text:       text in the button (Default value = 'Save As...')
-    :type button_text:        (str)
-    :param target:            key or (row,col) target for the button (Default value = (ThisRow, -1))
-    :type target:             str | (int, int)
-    :param file_types:        Default value = (("ALL Files", "*.* *"),).
-    :type file_types:         Tuple[(str, str), ...]
-    :param default_extension: If no extension entered by user, add this to filename (only used in saveas dialogs)
-    :type default_extension:  (str)
-    :param initial_folder:    starting path for folders and files
-    :type initial_folder:     (str)
-    :param disabled:          set disable state for element (Default = False)
-    :type disabled:           (bool)
-    :param tooltip:           text, that will appear when mouse hovers over the element
-    :type tooltip:            (str)
-    :param size:              (w,h) w=characters-wide, h=rows-high
-    :type size:               (int, int)
-    :param auto_size_button:  True if button size is determined by button text
-    :type auto_size_button:   (bool)
-    :param button_color:      button color (foreground, background)
-    :type button_color:       (str, str) or str
-    :param enable_events:     Turns on the element specific events.(Default = False)
-    :type enable_events:      (bool)
-    :param font:              specifies the  font family, size, etc. Tuple or Single string format 'name size styles'. Styles: italic * roman bold normal underline overstrike
-    :type font:               (str or (str, int[, str]) or None)
-    :param pad:               Amount of padding to put around element in pixels (left/right, top/bottom) or ((left, right), (top, bottom)) or an int. If an int, then it's converted into a tuple (int, int)
-    :type pad:                (int, int) or ((int, int),(int,int)) or (int,(int,int)) or  ((int, int),int) | int
-    :param key:               key for uniquely identify this element (for window.find_element)
-    :type key:                str | int | tuple | object
-    :param visible:           set initial visibility state of the Button
-    :type visible:            (bool)
-    :param metadata:          Anything you want to store along with this button
-    :type metadata:           (Any)
-    :param expand_x:          If True Element will expand in the Horizontal directions
-    :type expand_x:           (bool)
-    :param expand_y:          If True Element will expand in the Vertical directions
-    :type expand_y:           (bool)
-    :return:                  returns a button
-    :rtype:                   (Button)
-    """
-    return Button(button_text=button_text, button_type=Button.TYPE.SAVEAS_FILE, target=target, file_types=file_types,
-                  initial_folder=initial_folder, default_extension=default_extension, tooltip=tooltip, size=size, disabled=disabled,
-                  auto_size_button=auto_size_button, button_color=button_color,
-                  enable_events=enable_events, font=font, pad=pad, key=key, visible=visible, metadata=metadata, expand_x=expand_x, expand_y=expand_y)
+        """
+        :param button_text:       text in the button (Default value = 'Save As...')
+        :type button_text:        (str)
+        :param target:            key or (row,col) target for the button (Default value = (ThisRow, -1))
+        :type target:             str | (int, int)
+        :param file_types:        Default value = (("ALL Files", "*.* *"),).
+        :type file_types:         Tuple[(str, str), ...]
+        :param default_extension: If no extension entered by user, add this to filename (only used in saveas dialogs)
+        :type default_extension:  (str)
+        :param initial_folder:    starting path for folders and files
+        :type initial_folder:     (str)
+        :param disabled:          set disable state for element (Default = False)
+        :type disabled:           (bool)
+        :param tooltip:           text, that will appear when mouse hovers over the element
+        :type tooltip:            (str)
+        :param size:              (w,h) w=characters-wide, h=rows-high
+        :type size:               (int, int)
+        :param auto_size_button:  True if button size is determined by button text
+        :type auto_size_button:   (bool)
+        :param button_color:      button color (foreground, background)
+        :type button_color:       (str, str) or str
+        :param enable_events:     Turns on the element specific events.(Default = False)
+        :type enable_events:      (bool)
+        :param font:              specifies the  font family, size, etc. Tuple or Single string format 'name size styles'. Styles: italic * roman bold normal underline overstrike
+        :type font:               (str or (str, int[, str]) or None)
+        :param pad:               Amount of padding to put around element in pixels (left/right, top/bottom) or ((left, right), (top, bottom)) or an int. If an int, then it's converted into a tuple (int, int)
+        :type pad:                (int, int) or ((int, int),(int,int)) or (int,(int,int)) or  ((int, int),int) | int
+        :param key:               key for uniquely identify this element (for window.find_element)
+        :type key:                str | int | tuple | object
+        :param visible:           set initial visibility state of the Button
+        :type visible:            (bool)
+        :param metadata:          Anything you want to store along with this button
+        :type metadata:           (Any)
+        :param expand_x:          If True Element will expand in the Horizontal directions
+        :type expand_x:           (bool)
+        :param expand_y:          If True Element will expand in the Vertical directions
+        :type expand_y:           (bool)
+        :return:                  returns a button
+        :rtype:                   (Button)
+        """
+        super().__init__(button_text=button_text, button_type=Button.TYPE.SAVEAS_FILE, target=target, file_types=file_types,
+                        initial_folder=initial_folder, default_extension=default_extension, tooltip=tooltip, size=size, disabled=disabled,
+                        auto_size_button=auto_size_button, button_color=button_color,
+                        enable_events=enable_events, font=font, pad=pad, key=key, visible=visible, metadata=metadata, expand_x=expand_x, expand_y=expand_y)
 
 
 # -------------------------  SAVE BUTTON Element lazy function  ------------------------- #
-def Save(button_text='Save', *, size=(None, None), auto_size_button=None, button_color=None, bind_return_key=True,
+class Save(Button):
+    def __init__(self, button_text='Save', *, size=(None, None), auto_size_button=None, button_color=None, bind_return_key=True,
          disabled=False, tooltip=None, font=None, focus=False, pad=None, key=None, visible=True, metadata=None, expand_x=False, expand_y=False):
-    """
-
-    :param button_text:      text in the button (Default value = 'Save')
-    :type button_text:       (str)
-    :param size:             (w,h) w=characters-wide, h=rows-high
-    :type size:              (int, int)
-    :param auto_size_button: True if button size is determined by button text
-    :type auto_size_button:  (bool)
-    :param button_color:     button color (foreground, background)
-    :type button_color:      (str, str) | str
-    :param bind_return_key:  (Default = True) If True, this button will appear to be clicked when return key is pressed in other elements such as Input and elements with return key options
-    :type bind_return_key:   (bool)
-    :param disabled:         set disable state for element (Default = False)
-    :type disabled:          (bool)
-    :param tooltip:          text, that will appear when mouse hovers over the element
-    :type tooltip:           (str)
-    :param font:             specifies the  font family, size, etc. Tuple or Single string format 'name size styles'. Styles: italic * roman bold normal underline overstrike
-    :type font:              (str or (str, int[, str]) or None)
-    :param focus:            if focus should be set to this
-    :type focus:             idk_yetReally
-    :param pad:              Amount of padding to put around element in pixels (left/right, top/bottom) or ((left, right), (top, bottom)) or an int. If an int, then it's converted into a tuple (int, int)
-    :type pad:               (int, int) or ((int, int),(int,int)) or (int,(int,int)) or  ((int, int),int) | int
-    :param key:              key for uniquely identify this element (for window.find_element)
-    :type key:               str | int | tuple | object
-    :param visible:          set initial visibility state of the Button
-    :type visible:           (bool)
-    :param metadata:         Anything you want to store along with this button
-    :type metadata:          (Any)
-    :param expand_x:         If True Element will expand in the Horizontal directions
-    :type expand_x:          (bool)
-    :param expand_y:         If True Element will expand in the Vertical directions
-    :type expand_y:          (bool)
-    :return:                 returns a button
-    :rtype:                  (Button)
-    """
-    return Button(button_text=button_text, button_type=Button.TYPE.READ_FORM, tooltip=tooltip, size=size,
-                  auto_size_button=auto_size_button, button_color=button_color, font=font, disabled=disabled,
-                  bind_return_key=bind_return_key, focus=focus, pad=pad,key=key, visible=visible, metadata=metadata, expand_x=expand_x, expand_y=expand_y)
+        """
+        :param button_text:      text in the button (Default value = 'Save')
+        :type button_text:       (str)
+        :param size:             (w,h) w=characters-wide, h=rows-high
+        :type size:              (int, int)
+        :param auto_size_button: True if button size is determined by button text
+        :type auto_size_button:  (bool)
+        :param button_color:     button color (foreground, background)
+        :type button_color:      (str, str) | str
+        :param bind_return_key:  (Default = True) If True, this button will appear to be clicked when return key is pressed in other elements such as Input and elements with return key options
+        :type bind_return_key:   (bool)
+        :param disabled:         set disable state for element (Default = False)
+        :type disabled:          (bool)
+        :param tooltip:          text, that will appear when mouse hovers over the element
+        :type tooltip:           (str)
+        :param font:             specifies the  font family, size, etc. Tuple or Single string format 'name size styles'. Styles: italic * roman bold normal underline overstrike
+        :type font:              (str or (str, int[, str]) or None)
+        :param focus:            if focus should be set to this
+        :type focus:             idk_yetReally
+        :param pad:              Amount of padding to put around element in pixels (left/right, top/bottom) or ((left, right), (top, bottom)) or an int. If an int, then it's converted into a tuple (int, int)
+        :type pad:               (int, int) or ((int, int),(int,int)) or (int,(int,int)) or  ((int, int),int) | int
+        :param key:              key for uniquely identify this element (for window.find_element)
+        :type key:               str | int | tuple | object
+        :param visible:          set initial visibility state of the Button
+        :type visible:           (bool)
+        :param metadata:         Anything you want to store along with this button
+        :type metadata:          (Any)
+        :param expand_x:         If True Element will expand in the Horizontal directions
+        :type expand_x:          (bool)
+        :param expand_y:         If True Element will expand in the Vertical directions
+        :type expand_y:          (bool)
+        :return:                 returns a button
+        :rtype:                  (Button)
+        """
+        super().__init__(button_text=button_text, button_type=Button.TYPE.READ_FORM, tooltip=tooltip, size=size,
+                    auto_size_button=auto_size_button, button_color=button_color, font=font, disabled=disabled,
+                    bind_return_key=bind_return_key, focus=focus, pad=pad,key=key, visible=visible, metadata=metadata, expand_x=expand_x, expand_y=expand_y)
 
 
 # -------------------------  SUBMIT BUTTON Element lazy function  ------------------------- #
-def Submit(button_text='Submit', *, size=(None, None), auto_size_button=None, button_color=None, disabled=False,
+class Submit(Button):
+    def __init__(self, button_text='Submit', *, size=(None, None), auto_size_button=None, button_color=None, disabled=False,
            bind_return_key=True, tooltip=None, font=None, focus=False, pad=None, key=None, visible=True, metadata=None, expand_x=False, expand_y=False):
-    """
-
-    :param button_text:      text in the button (Default value = 'Submit')
-    :type button_text:       (str)
-    :param size:             (w,h) w=characters-wide, h=rows-high
-    :type size:              (int, int)
-    :param auto_size_button: True if button size is determined by button text
-    :type auto_size_button:  (bool)
-    :param button_color:     button color (foreground, background)
-    :type button_color:      (str, str) | str
-    :param disabled:         set disable state for element (Default = False)
-    :type disabled:          (bool)
-    :param bind_return_key:  (Default = True) If True, this button will appear to be clicked when return key is pressed in other elements such as Input and elements with return key options
-    :type bind_return_key:   (bool)
-    :param tooltip:          text, that will appear when mouse hovers over the element
-    :type tooltip:           (str)
-    :param font:             specifies the  font family, size, etc. Tuple or Single string format 'name size styles'. Styles: italic * roman bold normal underline overstrike
-    :type font:              (str or (str, int[, str]) or None)
-    :param focus:            if focus should be set to this
-    :type focus:             idk_yetReally
-    :param pad:              Amount of padding to put around element in pixels (left/right, top/bottom) or ((left, right), (top, bottom)) or an int. If an int, then it's converted into a tuple (int, int)
-    :type pad:               (int, int) or ((int, int),(int,int)) or (int,(int,int)) or  ((int, int),int) | int
-    :param key:              key for uniquely identify this element (for window.find_element)
-    :type key:               str | int | tuple | object
-    :param visible:          set initial visibility state of the Button
-    :type visible:           (bool)
-    :param metadata:         Anything you want to store along with this button
-    :type metadata:          (Any)
-    :param expand_x:         If True Element will expand in the Horizontal directions
-    :type expand_x:          (bool)
-    :param expand_y:         If True Element will expand in the Vertical directions
-    :type expand_y:          (bool)
-    :return:                 returns a button
-    :rtype:                  (Button)
-    """
-    return Button(button_text=button_text, button_type=Button.TYPE.READ_FORM, tooltip=tooltip, size=size,
-                  auto_size_button=auto_size_button, button_color=button_color, font=font, disabled=disabled,
-                  bind_return_key=bind_return_key, focus=focus, pad=pad, key=key, visible=visible, metadata=metadata, expand_x=expand_x, expand_y=expand_y)
+        """
+        :param button_text:      text in the button (Default value = 'Submit')
+        :type button_text:       (str)
+        :param size:             (w,h) w=characters-wide, h=rows-high
+        :type size:              (int, int)
+        :param auto_size_button: True if button size is determined by button text
+        :type auto_size_button:  (bool)
+        :param button_color:     button color (foreground, background)
+        :type button_color:      (str, str) | str
+        :param disabled:         set disable state for element (Default = False)
+        :type disabled:          (bool)
+        :param bind_return_key:  (Default = True) If True, this button will appear to be clicked when return key is pressed in other elements such as Input and elements with return key options
+        :type bind_return_key:   (bool)
+        :param tooltip:          text, that will appear when mouse hovers over the element
+        :type tooltip:           (str)
+        :param font:             specifies the  font family, size, etc. Tuple or Single string format 'name size styles'. Styles: italic * roman bold normal underline overstrike
+        :type font:              (str or (str, int[, str]) or None)
+        :param focus:            if focus should be set to this
+        :type focus:             idk_yetReally
+        :param pad:              Amount of padding to put around element in pixels (left/right, top/bottom) or ((left, right), (top, bottom)) or an int. If an int, then it's converted into a tuple (int, int)
+        :type pad:               (int, int) or ((int, int),(int,int)) or (int,(int,int)) or  ((int, int),int) | int
+        :param key:              key for uniquely identify this element (for window.find_element)
+        :type key:               str | int | tuple | object
+        :param visible:          set initial visibility state of the Button
+        :type visible:           (bool)
+        :param metadata:         Anything you want to store along with this button
+        :type metadata:          (Any)
+        :param expand_x:         If True Element will expand in the Horizontal directions
+        :type expand_x:          (bool)
+        :param expand_y:         If True Element will expand in the Vertical directions
+        :type expand_y:          (bool)
+        :return:                 returns a button
+        :rtype:                  (Button)
+        """
+        super().__init__(button_text=button_text, button_type=Button.TYPE.READ_FORM, tooltip=tooltip, size=size,
+                    auto_size_button=auto_size_button, button_color=button_color, font=font, disabled=disabled,
+                    bind_return_key=bind_return_key, focus=focus, pad=pad, key=key, visible=visible, metadata=metadata, expand_x=expand_x, expand_y=expand_y)
 
 
 # -------------------------  OPEN BUTTON Element lazy function  ------------------------- #
-def Open(button_text='Open', *, size=(None, None), auto_size_button=None, button_color=None, disabled=False,
+class Open(Button):
+    def __init__(self, button_text='Open', *, size=(None, None), auto_size_button=None, button_color=None, disabled=False,
          bind_return_key=True, tooltip=None, font=None, focus=False, pad=None, key=None, visible=True, metadata=None, expand_x=False, expand_y=False):
-    """
-
-    :param button_text:      text in the button (Default value = 'Open')
-    :type button_text:       (str)
-    :param size:             (w,h) w=characters-wide, h=rows-high
-    :type size:              (int, int)
-    :param auto_size_button: True if button size is determined by button text
-    :type auto_size_button:  (bool)
-    :param button_color:     button color (foreground, background)
-    :type button_color:      (str, str) | str
-    :param disabled:         set disable state for element (Default = False)
-    :type disabled:          (bool)
-    :param bind_return_key:  (Default = True) If True, this button will appear to be clicked when return key is pressed in other elements such as Input and elements with return key options
-    :type bind_return_key:   (bool)
-    :param tooltip:          text, that will appear when mouse hovers over the element
-    :type tooltip:           (str)
-    :param font:             specifies the  font family, size, etc. Tuple or Single string format 'name size styles'. Styles: italic * roman bold normal underline overstrike
-    :type font:              (str or (str, int[, str]) or None)
-    :param focus:            if focus should be set to this
-    :type focus:             idk_yetReally
-    :param pad:              Amount of padding to put around element in pixels (left/right, top/bottom) or ((left, right), (top, bottom)) or an int. If an int, then it's converted into a tuple (int, int)
-    :type pad:               (int, int) or ((int, int),(int,int)) or (int,(int,int)) or  ((int, int),int) | int
-    :param key:              key for uniquely identify this element (for window.find_element)
-    :type key:               str | int | tuple | object
-    :param visible:          set initial visibility state of the Button
-    :type visible:           (bool)
-    :param metadata:         Anything you want to store along with this button
-    :type metadata:          (Any)
-    :param expand_x:         If True Element will expand in the Horizontal directions
-    :type expand_x:          (bool)
-    :param expand_y:         If True Element will expand in the Vertical directions
-    :type expand_y:          (bool)
-    :return:                 returns a button
-    :rtype:                  (Button)
-    """
-    return Button(button_text=button_text, button_type=Button.TYPE.READ_FORM, tooltip=tooltip, size=size,
-                  auto_size_button=auto_size_button, button_color=button_color, font=font, disabled=disabled,
-                  bind_return_key=bind_return_key, focus=focus, pad=pad, key=key, isible=visible, metadata=metadata, expand_x=expand_x, expand_y=expand_y)
+        """
+        :param button_text:      text in the button (Default value = 'Open')
+        :type button_text:       (str)
+        :param size:             (w,h) w=characters-wide, h=rows-high
+        :type size:              (int, int)
+        :param auto_size_button: True if button size is determined by button text
+        :type auto_size_button:  (bool)
+        :param button_color:     button color (foreground, background)
+        :type button_color:      (str, str) | str
+        :param disabled:         set disable state for element (Default = False)
+        :type disabled:          (bool)
+        :param bind_return_key:  (Default = True) If True, this button will appear to be clicked when return key is pressed in other elements such as Input and elements with return key options
+        :type bind_return_key:   (bool)
+        :param tooltip:          text, that will appear when mouse hovers over the element
+        :type tooltip:           (str)
+        :param font:             specifies the  font family, size, etc. Tuple or Single string format 'name size styles'. Styles: italic * roman bold normal underline overstrike
+        :type font:              (str or (str, int[, str]) or None)
+        :param focus:            if focus should be set to this
+        :type focus:             idk_yetReally
+        :param pad:              Amount of padding to put around element in pixels (left/right, top/bottom) or ((left, right), (top, bottom)) or an int. If an int, then it's converted into a tuple (int, int)
+        :type pad:               (int, int) or ((int, int),(int,int)) or (int,(int,int)) or  ((int, int),int) | int
+        :param key:              key for uniquely identify this element (for window.find_element)
+        :type key:               str | int | tuple | object
+        :param visible:          set initial visibility state of the Button
+        :type visible:           (bool)
+        :param metadata:         Anything you want to store along with this button
+        :type metadata:          (Any)
+        :param expand_x:         If True Element will expand in the Horizontal directions
+        :type expand_x:          (bool)
+        :param expand_y:         If True Element will expand in the Vertical directions
+        :type expand_y:          (bool)
+        :return:                 returns a button
+        :rtype:                  (Button)
+        """
+        super().__init__(button_text=button_text, button_type=Button.TYPE.READ_FORM, tooltip=tooltip, size=size,
+                    auto_size_button=auto_size_button, button_color=button_color, font=font, disabled=disabled,
+                    bind_return_key=bind_return_key, focus=focus, pad=pad, key=key, isible=visible, metadata=metadata, expand_x=expand_x, expand_y=expand_y)
 
 
 # -------------------------  OK BUTTON Element lazy function  ------------------------- #
-def OK(button_text='OK', *, size=(None, None), auto_size_button=None, button_color=None, disabled=False,
+class OK(Button):
+    def __init__(self, button_text='OK', *, size=(None, None), auto_size_button=None, button_color=None, disabled=False,
        bind_return_key=True, tooltip=None, font=None, focus=False, pad=None, key=None, visible=True, metadata=None, expand_x=False, expand_y=False):
-    """
-
-    :param button_text:      text in the button (Default value = 'OK')
-    :type button_text:       (str)
-    :param size:             (w,h) w=characters-wide, h=rows-high
-    :type size:              (int, int)
-    :param auto_size_button: True if button size is determined by button text
-    :type auto_size_button:  (bool)
-    :param button_color:     button color (foreground, background)
-    :type button_color:      (str, str) | str
-    :param disabled:         set disable state for element (Default = False)
-    :type disabled:          (bool)
-    :param bind_return_key:  (Default = True) If True, this button will appear to be clicked when return key is pressed in other elements such as Input and elements with return key options
-    :type bind_return_key:   (bool)
-    :param tooltip:          text, that will appear when mouse hovers over the element
-    :type tooltip:           (str)
-    :param font:             specifies the  font family, size, etc. Tuple or Single string format 'name size styles'. Styles: italic * roman bold normal underline overstrike
-    :type font:              (str or (str, int[, str]) or None)
-    :param focus:            if focus should be set to this
-    :type focus:             idk_yetReally
-    :param pad:              Amount of padding to put around element in pixels (left/right, top/bottom) or ((left, right), (top, bottom)) or an int. If an int, then it's converted into a tuple (int, int)
-    :type pad:               (int, int) or ((int, int),(int,int)) or (int,(int,int)) or  ((int, int),int) | int
-    :param key:              key for uniquely identify this element (for window.find_element)
-    :type key:               str | int | tuple | object
-    :param visible:          set initial visibility state of the Button
-    :type visible:           (bool)
-    :param metadata:         Anything you want to store along with this button
-    :type metadata:          (Any)
-    :param expand_x:         If True Element will expand in the Horizontal directions
-    :type expand_x:          (bool)
-    :param expand_y:         If True Element will expand in the Vertical directions
-    :type expand_y:          (bool)
-    :return:                 returns a button
-    :rtype:                  (Button)
-    """
-    return Button(button_text=button_text, button_type=Button.TYPE.READ_FORM, tooltip=tooltip, size=size,
-                  auto_size_button=auto_size_button, button_color=button_color, font=font, disabled=disabled,
-                  bind_return_key=bind_return_key, focus=focus, pad=pad, key=key, visible=visible, metadata=metadata, expand_x=expand_x, expand_y=expand_y)
+        """
+        :param button_text:      text in the button (Default value = 'OK')
+        :type button_text:       (str)
+        :param size:             (w,h) w=characters-wide, h=rows-high
+        :type size:              (int, int)
+        :param auto_size_button: True if button size is determined by button text
+        :type auto_size_button:  (bool)
+        :param button_color:     button color (foreground, background)
+        :type button_color:      (str, str) | str
+        :param disabled:         set disable state for element (Default = False)
+        :type disabled:          (bool)
+        :param bind_return_key:  (Default = True) If True, this button will appear to be clicked when return key is pressed in other elements such as Input and elements with return key options
+        :type bind_return_key:   (bool)
+        :param tooltip:          text, that will appear when mouse hovers over the element
+        :type tooltip:           (str)
+        :param font:             specifies the  font family, size, etc. Tuple or Single string format 'name size styles'. Styles: italic * roman bold normal underline overstrike
+        :type font:              (str or (str, int[, str]) or None)
+        :param focus:            if focus should be set to this
+        :type focus:             idk_yetReally
+        :param pad:              Amount of padding to put around element in pixels (left/right, top/bottom) or ((left, right), (top, bottom)) or an int. If an int, then it's converted into a tuple (int, int)
+        :type pad:               (int, int) or ((int, int),(int,int)) or (int,(int,int)) or  ((int, int),int) | int
+        :param key:              key for uniquely identify this element (for window.find_element)
+        :type key:               str | int | tuple | object
+        :param visible:          set initial visibility state of the Button
+        :type visible:           (bool)
+        :param metadata:         Anything you want to store along with this button
+        :type metadata:          (Any)
+        :param expand_x:         If True Element will expand in the Horizontal directions
+        :type expand_x:          (bool)
+        :param expand_y:         If True Element will expand in the Vertical directions
+        :type expand_y:          (bool)
+        :return:                 returns a button
+        :rtype:                  (Button)
+        """
+        super().__init__(button_text=button_text, button_type=Button.TYPE.READ_FORM, tooltip=tooltip, size=size,
+                    auto_size_button=auto_size_button, button_color=button_color, font=font, disabled=disabled,
+                    bind_return_key=bind_return_key, focus=focus, pad=pad, key=key, visible=visible, metadata=metadata, expand_x=expand_x, expand_y=expand_y)
 
 
 # -------------------------  YES BUTTON Element lazy function  ------------------------- #
-def Ok(button_text='Ok', *, size=(None, None), auto_size_button=None, button_color=None, disabled=False,
+class Ok(Button):
+    def __init__(self, button_text='Ok', *, size=(None, None), auto_size_button=None, button_color=None, disabled=False,
        bind_return_key=True, tooltip=None, font=None, focus=False, pad=None, key=None, visible=True, metadata=None, expand_x=False, expand_y=False):
-    """
-
-    :param button_text:      text in the button (Default value = 'Ok')
-    :type button_text:       (str)
-    :param size:             (w,h) w=characters-wide, h=rows-high
-    :type size:              (int, int)
-    :param auto_size_button: True if button size is determined by button text
-    :type auto_size_button:  (bool)
-    :param button_color:     button color (foreground, background)
-    :type button_color:      (str, str) | str
-    :param disabled:         set disable state for element (Default = False)
-    :type disabled:          (bool)
-    :param bind_return_key:  (Default = True) If True, this button will appear to be clicked when return key is pressed in other elements such as Input and elements with return key options
-    :type bind_return_key:   (bool)
-    :param tooltip:          text, that will appear when mouse hovers over the element
-    :type tooltip:           (str)
-    :param font:             specifies the  font family, size, etc. Tuple or Single string format 'name size styles'. Styles: italic * roman bold normal underline overstrike
-    :type font:              (str or (str, int[, str]) or None)
-    :param focus:            if focus should be set to this
-    :type focus:             idk_yetReally
-    :param pad:              Amount of padding to put around element in pixels (left/right, top/bottom) or ((left, right), (top, bottom)) or an int. If an int, then it's converted into a tuple (int, int)
-    :type pad:               (int, int) or ((int, int),(int,int)) or (int,(int,int)) or  ((int, int),int) | int
-    :param key:              key for uniquely identify this element (for window.find_element)
-    :type key:               str | int | tuple | object
-    :param visible:          set initial visibility state of the Button
-    :type visible:           (bool)
-    :param metadata:         Anything you want to store along with this button
-    :type metadata:          (Any)
-    :param expand_x:         If True Element will expand in the Horizontal directions
-    :type expand_x:          (bool)
-    :param expand_y:         If True Element will expand in the Vertical directions
-    :type expand_y:          (bool)
-    :return:                 returns a button
-    :rtype:                  (Button)
-    """
-    return Button(button_text=button_text, button_type=Button.TYPE.READ_FORM, tooltip=tooltip, size=size,
-                  auto_size_button=auto_size_button, button_color=button_color, font=font, disabled=disabled,
-                  bind_return_key=bind_return_key, focus=focus, pad=pad, key=key, visible=visible, metadata=metadata, expand_x=expand_x, expand_y=expand_y)
+        """
+        :param button_text:      text in the button (Default value = 'Ok')
+        :type button_text:       (str)
+        :param size:             (w,h) w=characters-wide, h=rows-high
+        :type size:              (int, int)
+        :param auto_size_button: True if button size is determined by button text
+        :type auto_size_button:  (bool)
+        :param button_color:     button color (foreground, background)
+        :type button_color:      (str, str) | str
+        :param disabled:         set disable state for element (Default = False)
+        :type disabled:          (bool)
+        :param bind_return_key:  (Default = True) If True, this button will appear to be clicked when return key is pressed in other elements such as Input and elements with return key options
+        :type bind_return_key:   (bool)
+        :param tooltip:          text, that will appear when mouse hovers over the element
+        :type tooltip:           (str)
+        :param font:             specifies the  font family, size, etc. Tuple or Single string format 'name size styles'. Styles: italic * roman bold normal underline overstrike
+        :type font:              (str or (str, int[, str]) or None)
+        :param focus:            if focus should be set to this
+        :type focus:             idk_yetReally
+        :param pad:              Amount of padding to put around element in pixels (left/right, top/bottom) or ((left, right), (top, bottom)) or an int. If an int, then it's converted into a tuple (int, int)
+        :type pad:               (int, int) or ((int, int),(int,int)) or (int,(int,int)) or  ((int, int),int) | int
+        :param key:              key for uniquely identify this element (for window.find_element)
+        :type key:               str | int | tuple | object
+        :param visible:          set initial visibility state of the Button
+        :type visible:           (bool)
+        :param metadata:         Anything you want to store along with this button
+        :type metadata:          (Any)
+        :param expand_x:         If True Element will expand in the Horizontal directions
+        :type expand_x:          (bool)
+        :param expand_y:         If True Element will expand in the Vertical directions
+        :type expand_y:          (bool)
+        :return:                 returns a button
+        :rtype:                  (Button)
+        """
+        super().__init__(button_text=button_text, button_type=Button.TYPE.READ_FORM, tooltip=tooltip, size=size,
+                    auto_size_button=auto_size_button, button_color=button_color, font=font, disabled=disabled,
+                    bind_return_key=bind_return_key, focus=focus, pad=pad, key=key, visible=visible, metadata=metadata, expand_x=expand_x, expand_y=expand_y)
 
 
 # -------------------------  CANCEL BUTTON Element lazy function  ------------------------- #
-def Cancel(button_text='Cancel', *, size=(None, None), auto_size_button=None, button_color=None, disabled=False,
+class Cancel(Button):
+    def __init__(self, button_text='Cancel', *, size=(None, None), auto_size_button=None, button_color=None, disabled=False,
            tooltip=None, font=None, bind_return_key=False, focus=False, pad=None, key=None, visible=True, metadata=None, expand_x=False, expand_y=False):
-    """
-
-    :param button_text:      text in the button (Default value = 'Cancel')
-    :type button_text:       (str)
-    :param size:             (w,h) w=characters-wide, h=rows-high
-    :type size:              (int, int)
-    :param auto_size_button: True if button size is determined by button text
-    :type auto_size_button:  (bool)
-    :param button_color:     button color (foreground, background)
-    :type button_color:      (str, str) | str
-    :param disabled:         set disable state for element (Default = False)
-    :type disabled:          (bool)
-    :param tooltip:          text, that will appear when mouse hovers over the element
-    :type tooltip:           (str)
-    :param font:             specifies the  font family, size, etc. Tuple or Single string format 'name size styles'. Styles: italic * roman bold normal underline overstrike
-    :type font:              (str or (str, int[, str]) or None)
-    :param bind_return_key:  (Default = False) If True, this button will appear to be clicked when return key is pressed in other elements such as Input and elements with return key options
-    :type bind_return_key:   (bool)
-    :param focus:            if focus should be set to this
-    :type focus:
-    :param pad:              Amount of padding to put around element in pixels (left/right, top/bottom) or ((left, right), (top, bottom)) or an int. If an int, then it's converted into a tuple (int, int)
-    :type pad:               (int, int) or ((int, int),(int,int)) or (int,(int,int)) or  ((int, int),int) | int
-    :param key:              key for uniquely identify this element (for window.find_element)
-    :type key:               str | int | tuple | object
-    :param visible:          set initial visibility state of the Button
-    :type visible:           (bool)
-    :param metadata:         Anything you want to store along with this button
-    :type metadata:          (Any)
-    :param expand_x:         If True Element will expand in the Horizontal directions
-    :type expand_x:          (bool)
-    :param expand_y:         If True Element will expand in the Vertical directions
-    :type expand_y:          (bool)
-    :return:                 returns a button
-    :rtype:                  (Button)
-    """
-    return Button(button_text=button_text, button_type=Button.TYPE.READ_FORM, tooltip=tooltip, size=size,
-                  auto_size_button=auto_size_button, button_color=button_color, font=font, disabled=disabled,
-                  bind_return_key=bind_return_key, focus=focus, pad=pad, key=key, visible=visible, metadata=metadata, expand_x=expand_x, expand_y=expand_y)
+        """
+        :param button_text:      text in the button (Default value = 'Cancel')
+        :type button_text:       (str)
+        :param size:             (w,h) w=characters-wide, h=rows-high
+        :type size:              (int, int)
+        :param auto_size_button: True if button size is determined by button text
+        :type auto_size_button:  (bool)
+        :param button_color:     button color (foreground, background)
+        :type button_color:      (str, str) | str
+        :param disabled:         set disable state for element (Default = False)
+        :type disabled:          (bool)
+        :param tooltip:          text, that will appear when mouse hovers over the element
+        :type tooltip:           (str)
+        :param font:             specifies the  font family, size, etc. Tuple or Single string format 'name size styles'. Styles: italic * roman bold normal underline overstrike
+        :type font:              (str or (str, int[, str]) or None)
+        :param bind_return_key:  (Default = False) If True, this button will appear to be clicked when return key is pressed in other elements such as Input and elements with return key options
+        :type bind_return_key:   (bool)
+        :param focus:            if focus should be set to this
+        :type focus:
+        :param pad:              Amount of padding to put around element in pixels (left/right, top/bottom) or ((left, right), (top, bottom)) or an int. If an int, then it's converted into a tuple (int, int)
+        :type pad:               (int, int) or ((int, int),(int,int)) or (int,(int,int)) or  ((int, int),int) | int
+        :param key:              key for uniquely identify this element (for window.find_element)
+        :type key:               str | int | tuple | object
+        :param visible:          set initial visibility state of the Button
+        :type visible:           (bool)
+        :param metadata:         Anything you want to store along with this button
+        :type metadata:          (Any)
+        :param expand_x:         If True Element will expand in the Horizontal directions
+        :type expand_x:          (bool)
+        :param expand_y:         If True Element will expand in the Vertical directions
+        :type expand_y:          (bool)
+        :return:                 returns a button
+        :rtype:                  (Button)
+        """
+        super().__init__(button_text=button_text, button_type=Button.TYPE.READ_FORM, tooltip=tooltip, size=size,
+                    auto_size_button=auto_size_button, button_color=button_color, font=font, disabled=disabled,
+                    bind_return_key=bind_return_key, focus=focus, pad=pad, key=key, visible=visible, metadata=metadata, expand_x=expand_x, expand_y=expand_y)
 
 
 # -------------------------  QUIT BUTTON Element lazy function  ------------------------- #
-def Quit(button_text='Quit', *, size=(None, None), auto_size_button=None, button_color=None, disabled=False, tooltip=None,
+class Quit(Button):
+    def __init__(self, button_text='Quit', *, size=(None, None), auto_size_button=None, button_color=None, disabled=False, tooltip=None,
          font=None, bind_return_key=False, focus=False, pad=None, key=None, visible=True, metadata=None, expand_x=False, expand_y=False):
-    """
-
-    :param button_text:      text in the button (Default value = 'Quit')
-    :type button_text:       (str)
-    :param size:             (w,h) w=characters-wide, h=rows-high
-    :type size:              (int, int)
-    :param auto_size_button: True if button size is determined by button text
-    :type auto_size_button:  (bool)
-    :param button_color:     button color (foreground, background)
-    :type button_color:      (str, str) | str
-    :param disabled:         set disable state for element (Default = False)
-    :type disabled:          (bool)
-    :param tooltip:          text, that will appear when mouse hovers over the element
-    :type tooltip:           (str)
-    :param font:             specifies the  font family, size, etc. Tuple or Single string format 'name size styles'. Styles: italic * roman bold normal underline overstrike
-    :type font:              (str or (str, int[, str]) or None)
-    :param bind_return_key:  (Default = False) If True, this button will appear to be clicked when return key is pressed in other elements such as Input and elements with return key options
-    :type bind_return_key:   (bool)
-    :param focus:            if focus should be set to this
-    :type focus:             (bool)
-    :param pad:              Amount of padding to put around element in pixels (left/right, top/bottom) or ((left, right), (top, bottom)) or an int. If an int, then it's converted into a tuple (int, int)
-    :type pad:               (int, int) or ((int, int),(int,int)) or (int,(int,int)) or  ((int, int),int) | int
-    :param key:              key for uniquely identify this element (for window.find_element)
-    :type key:               str | int | tuple | object
-    :param visible:          set initial visibility state of the Button
-    :type visible:           (bool)
-    :param metadata:         Anything you want to store along with this button
-    :type metadata:          (Any)
-    :param expand_x:         If True Element will expand in the Horizontal directions
-    :type expand_x:          (bool)
-    :param expand_y:         If True Element will expand in the Vertical directions
-    :type expand_y:          (bool)
-    :return:                 returns a button
-    :rtype:                  (Button)
-    """
-    return Button(button_text=button_text, button_type=Button.TYPE.READ_FORM, tooltip=tooltip, size=size,
-                  auto_size_button=auto_size_button, button_color=button_color, font=font, disabled=disabled,
-                  bind_return_key=bind_return_key, focus=focus, pad=pad, key=key, visible=visible, metadata=metadata, expand_x=expand_x, expand_y=expand_y)
+        """
+        :param button_text:      text in the button (Default value = 'Quit')
+        :type button_text:       (str)
+        :param size:             (w,h) w=characters-wide, h=rows-high
+        :type size:              (int, int)
+        :param auto_size_button: True if button size is determined by button text
+        :type auto_size_button:  (bool)
+        :param button_color:     button color (foreground, background)
+        :type button_color:      (str, str) | str
+        :param disabled:         set disable state for element (Default = False)
+        :type disabled:          (bool)
+        :param tooltip:          text, that will appear when mouse hovers over the element
+        :type tooltip:           (str)
+        :param font:             specifies the  font family, size, etc. Tuple or Single string format 'name size styles'. Styles: italic * roman bold normal underline overstrike
+        :type font:              (str or (str, int[, str]) or None)
+        :param bind_return_key:  (Default = False) If True, this button will appear to be clicked when return key is pressed in other elements such as Input and elements with return key options
+        :type bind_return_key:   (bool)
+        :param focus:            if focus should be set to this
+        :type focus:             (bool)
+        :param pad:              Amount of padding to put around element in pixels (left/right, top/bottom) or ((left, right), (top, bottom)) or an int. If an int, then it's converted into a tuple (int, int)
+        :type pad:               (int, int) or ((int, int),(int,int)) or (int,(int,int)) or  ((int, int),int) | int
+        :param key:              key for uniquely identify this element (for window.find_element)
+        :type key:               str | int | tuple | object
+        :param visible:          set initial visibility state of the Button
+        :type visible:           (bool)
+        :param metadata:         Anything you want to store along with this button
+        :type metadata:          (Any)
+        :param expand_x:         If True Element will expand in the Horizontal directions
+        :type expand_x:          (bool)
+        :param expand_y:         If True Element will expand in the Vertical directions
+        :type expand_y:          (bool)
+        :return:                 returns a button
+        :rtype:                  (Button)
+        """
+        super().__init__(button_text=button_text, button_type=Button.TYPE.READ_FORM, tooltip=tooltip, size=size,
+                    auto_size_button=auto_size_button, button_color=button_color, font=font, disabled=disabled,
+                    bind_return_key=bind_return_key, focus=focus, pad=pad, key=key, visible=visible, metadata=metadata, expand_x=expand_x, expand_y=expand_y)
 
 
 # -------------------------  Exit BUTTON Element lazy function  ------------------------- #
-def Exit(button_text='Exit', *, size=(None, None), auto_size_button=None, button_color=None, disabled=False, tooltip=None,
+class Exit(Button):
+    def __init__(self, button_text='Exit', *, size=(None, None), auto_size_button=None, button_color=None, disabled=False, tooltip=None,
          font=None, bind_return_key=False, focus=False, pad=None, key=None, visible=True, metadata=None, expand_x=False, expand_y=False):
-    """
-
-    :param button_text:      text in the button (Default value = 'Exit')
-    :type button_text:       (str)
-    :param size:             (w,h) w=characters-wide, h=rows-high
-    :type size:              (int, int)
-    :param auto_size_button: True if button size is determined by button text
-    :type auto_size_button:  (bool)
-    :param button_color:     button color (foreground, background)
-    :type button_color:      (str, str) | str
-    :param disabled:         set disable state for element (Default = False)
-    :type disabled:          (bool)
-    :param tooltip:          text, that will appear when mouse hovers over the element
-    :type tooltip:           (str)
-    :param font:             specifies the  font family, size, etc. Tuple or Single string format 'name size styles'. Styles: italic * roman bold normal underline overstrike
-    :type font:              (str or (str, int[, str]) or None)
-    :param bind_return_key:  (Default = False) If True, this button will appear to be clicked when return key is pressed in other elements such as Input and elements with return key options
-    :type bind_return_key:   (bool)
-    :param focus:            if focus should be set to this
-    :type focus:
-    :param pad:              Amount of padding to put around element in pixels (left/right, top/bottom) or ((left, right), (top, bottom)) or an int. If an int, then it's converted into a tuple (int, int)
-    :type pad:               (int, int) or ((int, int),(int,int)) or (int,(int,int)) or  ((int, int),int) | int
-    :param key:              key for uniquely identify this element (for window.find_element)
-    :type key:               str | int | tuple | object
-    :param visible:          set initial visibility state of the Button
-    :type visible:           (bool)
-    :param metadata:         Anything you want to store along with this button
-    :type metadata:          (Any)
-    :param expand_x:         If True Element will expand in the Horizontal directions
-    :type expand_x:          (bool)
-    :param expand_y:         If True Element will expand in the Vertical directions
-    :type expand_y:          (bool)
-    :return:                 returns a button
-    :rtype:                  (Button)
-    """
-    return Button(button_text=button_text, button_type=Button.TYPE.READ_FORM, tooltip=tooltip, size=size,
-                  auto_size_button=auto_size_button, button_color=button_color, font=font, disabled=disabled,
-                  bind_return_key=bind_return_key, focus=focus, pad=pad, key=key, visible=visible, metadata=metadata, expand_x=expand_x, expand_y=expand_y)
+        """
+        :param button_text:      text in the button (Default value = 'Exit')
+        :type button_text:       (str)
+        :param size:             (w,h) w=characters-wide, h=rows-high
+        :type size:              (int, int)
+        :param auto_size_button: True if button size is determined by button text
+        :type auto_size_button:  (bool)
+        :param button_color:     button color (foreground, background)
+        :type button_color:      (str, str) | str
+        :param disabled:         set disable state for element (Default = False)
+        :type disabled:          (bool)
+        :param tooltip:          text, that will appear when mouse hovers over the element
+        :type tooltip:           (str)
+        :param font:             specifies the  font family, size, etc. Tuple or Single string format 'name size styles'. Styles: italic * roman bold normal underline overstrike
+        :type font:              (str or (str, int[, str]) or None)
+        :param bind_return_key:  (Default = False) If True, this button will appear to be clicked when return key is pressed in other elements such as Input and elements with return key options
+        :type bind_return_key:   (bool)
+        :param focus:            if focus should be set to this
+        :type focus:
+        :param pad:              Amount of padding to put around element in pixels (left/right, top/bottom) or ((left, right), (top, bottom)) or an int. If an int, then it's converted into a tuple (int, int)
+        :type pad:               (int, int) or ((int, int),(int,int)) or (int,(int,int)) or  ((int, int),int) | int
+        :param key:              key for uniquely identify this element (for window.find_element)
+        :type key:               str | int | tuple | object
+        :param visible:          set initial visibility state of the Button
+        :type visible:           (bool)
+        :param metadata:         Anything you want to store along with this button
+        :type metadata:          (Any)
+        :param expand_x:         If True Element will expand in the Horizontal directions
+        :type expand_x:          (bool)
+        :param expand_y:         If True Element will expand in the Vertical directions
+        :type expand_y:          (bool)
+        :return:                 returns a button
+        :rtype:                  (Button)
+        """
+        super().__init__(button_text=button_text, button_type=Button.TYPE.READ_FORM, tooltip=tooltip, size=size,
+                        auto_size_button=auto_size_button, button_color=button_color, font=font, disabled=disabled,
+                        bind_return_key=bind_return_key, focus=focus, pad=pad, key=key, visible=visible, metadata=metadata, expand_x=expand_x, expand_y=expand_y)
 
 
 # -------------------------  YES BUTTON Element lazy function  ------------------------- #
-def Yes(button_text='Yes', *, size=(None, None), auto_size_button=None, button_color=None, disabled=False, tooltip=None,
+class Yes(Button):
+    def __init__(self, button_text='Yes', *, size=(None, None), auto_size_button=None, button_color=None, disabled=False, tooltip=None,
         font=None, bind_return_key=True, focus=False, pad=None, key=None, visible=True, metadata=None, expand_x=False, expand_y=False):
-    """
-
-    :param button_text:      text in the button (Default value = 'Yes')
-    :type button_text:       (str)
-    :param size:             (w,h) w=characters-wide, h=rows-high
-    :type size:              (int, int)
-    :param auto_size_button: True if button size is determined by button text
-    :type auto_size_button:  (bool)
-    :param button_color:     button color (foreground, background)
-    :type button_color:      (str, str) | str
-    :param disabled:         set disable state for element (Default = False)
-    :type disabled:          (bool)
-    :param tooltip:          text, that will appear when mouse hovers over the element
-    :type tooltip:           (str)
-    :param font:             specifies the  font family, size, etc. Tuple or Single string format 'name size styles'. Styles: italic * roman bold normal underline overstrike
-    :type font:              (str or (str, int[, str]) or None)
-    :param bind_return_key:  (Default = True) If True, this button will appear to be clicked when return key is pressed in other elements such as Input and elements with return key options
-    :type bind_return_key:   (bool)
-    :param focus:            if focus should be set to this
-    :type focus:
-    :param pad:              Amount of padding to put around element in pixels (left/right, top/bottom) or ((left, right), (top, bottom)) or an int. If an int, then it's converted into a tuple (int, int)
-    :type pad:               (int, int) or ((int, int),(int,int)) or (int,(int,int)) or  ((int, int),int) | int
-    :param key:              key for uniquely identify this element (for window.find_element)
-    :type key:               str | int | tuple | object
-    :param visible:          set initial visibility state of the Button
-    :type visible:           (bool)
-    :param metadata:         Anything you want to store along with this button
-    :type metadata:          (Any)
-    :param expand_x:         If True Element will expand in the Horizontal directions
-    :type expand_x:          (bool)
-    :param expand_y:         If True Element will expand in the Vertical directions
-    :type expand_y:          (bool)
-    :return:                 returns a button
-    :rtype:                  (Button)
-    """
-    return Button(button_text=button_text, button_type=Button.TYPE.READ_FORM, tooltip=tooltip, size=size,
-                  auto_size_button=auto_size_button, button_color=button_color, font=font, disabled=disabled,
-                  bind_return_key=bind_return_key, focus=focus, pad=pad, key=key, visible=visible, metadata=metadata, expand_x=expand_x, expand_y=expand_y)
+        """
+        :param button_text:      text in the button (Default value = 'Yes')
+        :type button_text:       (str)
+        :param size:             (w,h) w=characters-wide, h=rows-high
+        :type size:              (int, int)
+        :param auto_size_button: True if button size is determined by button text
+        :type auto_size_button:  (bool)
+        :param button_color:     button color (foreground, background)
+        :type button_color:      (str, str) | str
+        :param disabled:         set disable state for element (Default = False)
+        :type disabled:          (bool)
+        :param tooltip:          text, that will appear when mouse hovers over the element
+        :type tooltip:           (str)
+        :param font:             specifies the  font family, size, etc. Tuple or Single string format 'name size styles'. Styles: italic * roman bold normal underline overstrike
+        :type font:              (str or (str, int[, str]) or None)
+        :param bind_return_key:  (Default = True) If True, this button will appear to be clicked when return key is pressed in other elements such as Input and elements with return key options
+        :type bind_return_key:   (bool)
+        :param focus:            if focus should be set to this
+        :type focus:
+        :param pad:              Amount of padding to put around element in pixels (left/right, top/bottom) or ((left, right), (top, bottom)) or an int. If an int, then it's converted into a tuple (int, int)
+        :type pad:               (int, int) or ((int, int),(int,int)) or (int,(int,int)) or  ((int, int),int) | int
+        :param key:              key for uniquely identify this element (for window.find_element)
+        :type key:               str | int | tuple | object
+        :param visible:          set initial visibility state of the Button
+        :type visible:           (bool)
+        :param metadata:         Anything you want to store along with this button
+        :type metadata:          (Any)
+        :param expand_x:         If True Element will expand in the Horizontal directions
+        :type expand_x:          (bool)
+        :param expand_y:         If True Element will expand in the Vertical directions
+        :type expand_y:          (bool)
+        :return:                 returns a button
+        :rtype:                  (Button)
+        """
+        super().__init__(button_text=button_text, button_type=Button.TYPE.READ_FORM, tooltip=tooltip, size=size,
+                        auto_size_button=auto_size_button, button_color=button_color, font=font, disabled=disabled,
+                        bind_return_key=bind_return_key, focus=focus, pad=pad, key=key, visible=visible, metadata=metadata, expand_x=expand_x, expand_y=expand_y)
 
 
 # -------------------------  NO BUTTON Element lazy function  ------------------------- #
-def No(button_text='No', *, size=(None, None), auto_size_button=None, button_color=None, disabled=False, tooltip=None,
+class No(Button):
+    def __init__(self, button_text='No', *, size=(None, None), auto_size_button=None, button_color=None, disabled=False, tooltip=None,
        font=None, bind_return_key=False, focus=False, pad=None, key=None, visible=True, metadata=None, expand_x=False, expand_y=False):
-    """
-
-    :param button_text:      text in the button (Default value = 'No')
-    :type button_text:       (str)
-    :param size:             (w,h) w=characters-wide, h=rows-high
-    :type size:              (int, int)
-    :param auto_size_button: True if button size is determined by button text
-    :type auto_size_button:  (bool)
-    :param button_color:     button color (foreground, background)
-    :type button_color:      (str, str) | str
-    :param disabled:         set disable state for element (Default = False)
-    :type disabled:          (bool)
-    :param tooltip:          text, that will appear when mouse hovers over the element
-    :type tooltip:           (str)
-    :param font:             specifies the  font family, size, etc. Tuple or Single string format 'name size styles'. Styles: italic * roman bold normal underline overstrike
-    :type font:              (str or (str, int[, str]) or None)
-    :param bind_return_key:  (Default = False) If True, then the return key will cause a the Listbox to generate an event
-    :type bind_return_key:   (bool)
-    :param focus:            if focus should be set to this
-    :type focus:
-    :param pad:              Amount of padding to put around element in pixels (left/right, top/bottom) or ((left, right), (top, bottom)) or an int. If an int, then it's converted into a tuple (int, int)
-    :type pad:               (int, int) or ((int, int),(int,int)) or (int,(int,int)) or  ((int, int),int) | int
-    :param key:              key for uniquely identify this element (for window.find_element)
-    :type key:               str | int | tuple | object
-    :param visible:          set initial visibility state of the Button
-    :type visible:           (bool)
-    :param metadata:         Anything you want to store along with this button
-    :type metadata:          (Any)
-    :param expand_x:         If True Element will expand in the Horizontal directions
-    :type expand_x:          (bool)
-    :param expand_y:         If True Element will expand in the Vertical directions
-    :type expand_y:          (bool)
-    :return:                 returns a button
-    :rtype:                  (Button)
-    """
-    return Button(button_text=button_text, button_type=Button.TYPE.READ_FORM, tooltip=tooltip, size=size,
-                  auto_size_button=auto_size_button, button_color=button_color, font=font, disabled=disabled,
-                  bind_return_key=bind_return_key, focus=focus, pad=pad, key=key, visible=visible, metadata=metadata, expand_x=expand_x, expand_y=expand_y)
+        """
+        :param button_text:      text in the button (Default value = 'No')
+        :type button_text:       (str)
+        :param size:             (w,h) w=characters-wide, h=rows-high
+        :type size:              (int, int)
+        :param auto_size_button: True if button size is determined by button text
+        :type auto_size_button:  (bool)
+        :param button_color:     button color (foreground, background)
+        :type button_color:      (str, str) | str
+        :param disabled:         set disable state for element (Default = False)
+        :type disabled:          (bool)
+        :param tooltip:          text, that will appear when mouse hovers over the element
+        :type tooltip:           (str)
+        :param font:             specifies the  font family, size, etc. Tuple or Single string format 'name size styles'. Styles: italic * roman bold normal underline overstrike
+        :type font:              (str or (str, int[, str]) or None)
+        :param bind_return_key:  (Default = False) If True, then the return key will cause a the Listbox to generate an event
+        :type bind_return_key:   (bool)
+        :param focus:            if focus should be set to this
+        :type focus:
+        :param pad:              Amount of padding to put around element in pixels (left/right, top/bottom) or ((left, right), (top, bottom)) or an int. If an int, then it's converted into a tuple (int, int)
+        :type pad:               (int, int) or ((int, int),(int,int)) or (int,(int,int)) or  ((int, int),int) | int
+        :param key:              key for uniquely identify this element (for window.find_element)
+        :type key:               str | int | tuple | object
+        :param visible:          set initial visibility state of the Button
+        :type visible:           (bool)
+        :param metadata:         Anything you want to store along with this button
+        :type metadata:          (Any)
+        :param expand_x:         If True Element will expand in the Horizontal directions
+        :type expand_x:          (bool)
+        :param expand_y:         If True Element will expand in the Vertical directions
+        :type expand_y:          (bool)
+        :return:                 returns a button
+        :rtype:                  (Button)
+        """
+        super().__init__(button_text=button_text, button_type=Button.TYPE.READ_FORM, tooltip=tooltip, size=size,
+                    auto_size_button=auto_size_button, button_color=button_color, font=font, disabled=disabled,
+                    bind_return_key=bind_return_key, focus=focus, pad=pad, key=key, visible=visible, metadata=metadata, expand_x=expand_x, expand_y=expand_y)
 
 
 # -------------------------  NO BUTTON Element lazy function  ------------------------- #
-def Help(button_text='Help', *, size=(None, None), auto_size_button=None, button_color=None, disabled=False, font=None,
+class Help(Button):
+    def __init__(self, button_text='Help', *, size=(None, None), auto_size_button=None, button_color=None, disabled=False, font=None,
          tooltip=None, bind_return_key=False, focus=False, pad=None, key=None, visible=True, metadata=None, expand_x=False, expand_y=False):
-    """
-    :param button_text:      text in the button (Default value = 'Help')
-    :type button_text:       (str)
-    :param size:             (w,h) w=characters-wide, h=rows-high
-    :type size:              (int, int)
-    :param auto_size_button: True if button size is determined by button text
-    :type auto_size_button:  (bool)
-    :param button_color:     button color (foreground, background)
-    :type button_color:      (str, str) | str
-    :param disabled:         set disable state for element (Default = False)
-    :type disabled:          (bool)
-    :param font:             specifies the  font family, size, etc. Tuple or Single string format 'name size styles'. Styles: italic * roman bold normal underline overstrike
-    :type font:              (str or (str, int[, str]) or None)
-    :param tooltip:          text, that will appear when mouse hovers over the element
-    :type tooltip:           (str)
-    :param bind_return_key:  (Default = False) If True, this button will appear to be clicked when return key is pressed in other elements such as Input and elements with return key options
-    :type bind_return_key:   (bool)
-    :param focus:            if focus should be set to this
-    :type focus:
-    :param pad:              Amount of padding to put around element in pixels (left/right, top/bottom) or ((left, right), (top, bottom)) or an int. If an int, then it's converted into a tuple (int, int)
-    :type pad:               (int, int) or ((int, int),(int,int)) or (int,(int,int)) or  ((int, int),int) | int
-    :param key:              key for uniquely identify this element (for window.find_element)
-    :type key:               str | int | tuple | object
-    :param visible:          set initial visibility state of the Button
-    :type visible:           (bool)
-    :param metadata:         Anything you want to store along with this button
-    :type metadata:          (Any)
-    :param expand_x:         If True Element will expand in the Horizontal directions
-    :type expand_x:          (bool)
-    :param expand_y:         If True Element will expand in the Vertical directions
-    :type expand_y:          (bool)
-    :return:                 returns a button
-    :rtype:                  (Button)
-    """
-    return Button(button_text=button_text, button_type=Button.TYPE.READ_FORM, tooltip=tooltip, size=size,
-                  auto_size_button=auto_size_button, button_color=button_color, font=font, disabled=disabled,
-                  bind_return_key=bind_return_key, focus=focus, pad=pad, key=key, visible=visible, metadata=metadata, expand_x=expand_x, expand_y=expand_y)
+        """
+        :param button_text:      text in the button (Default value = 'Help')
+        :type button_text:       (str)
+        :param size:             (w,h) w=characters-wide, h=rows-high
+        :type size:              (int, int)
+        :param auto_size_button: True if button size is determined by button text
+        :type auto_size_button:  (bool)
+        :param button_color:     button color (foreground, background)
+        :type button_color:      (str, str) | str
+        :param disabled:         set disable state for element (Default = False)
+        :type disabled:          (bool)
+        :param font:             specifies the  font family, size, etc. Tuple or Single string format 'name size styles'. Styles: italic * roman bold normal underline overstrike
+        :type font:              (str or (str, int[, str]) or None)
+        :param tooltip:          text, that will appear when mouse hovers over the element
+        :type tooltip:           (str)
+        :param bind_return_key:  (Default = False) If True, this button will appear to be clicked when return key is pressed in other elements such as Input and elements with return key options
+        :type bind_return_key:   (bool)
+        :param focus:            if focus should be set to this
+        :type focus:
+        :param pad:              Amount of padding to put around element in pixels (left/right, top/bottom) or ((left, right), (top, bottom)) or an int. If an int, then it's converted into a tuple (int, int)
+        :type pad:               (int, int) or ((int, int),(int,int)) or (int,(int,int)) or  ((int, int),int) | int
+        :param key:              key for uniquely identify this element (for window.find_element)
+        :type key:               str | int | tuple | object
+        :param visible:          set initial visibility state of the Button
+        :type visible:           (bool)
+        :param metadata:         Anything you want to store along with this button
+        :type metadata:          (Any)
+        :param expand_x:         If True Element will expand in the Horizontal directions
+        :type expand_x:          (bool)
+        :param expand_y:         If True Element will expand in the Vertical directions
+        :type expand_y:          (bool)
+        :return:                 returns a button
+        :rtype:                  (Button)
+        """
+        super().__init__(button_text=button_text, button_type=Button.TYPE.READ_FORM, tooltip=tooltip, size=size,
+                    auto_size_button=auto_size_button, button_color=button_color, font=font, disabled=disabled,
+                    bind_return_key=bind_return_key, focus=focus, pad=pad, key=key, visible=visible, metadata=metadata, expand_x=expand_x, expand_y=expand_y)
 
 
 
 # -------------------------  GENERIC BUTTON Element lazy function  ------------------------- #
-def ReadButton(button_text, *, image_filename=None, image_data=None, image_size=(None, None), image_subsample=None,
+class ReadButton(Button):
+    def __init__(self, button_text, *, image_filename=None, image_data=None, image_size=(None, None), image_subsample=None,
                border_width=None, tooltip=None, size=(None, None), auto_size_button=None, button_color=None, font=None,
                bind_return_key=False, disabled=False, focus=False, pad=None, key=None, metadata=None, expand_x=False, expand_y=False):
-    """
-    :param button_text:      text in the button
-    :type button_text:       (str)
-    :param image_filename:   image filename if there is a button image
-    :type image_filename:    image filename if there is a button image
-    :param image_data:       in-RAM image to be displayed on button
-    :type image_data:        in-RAM image to be displayed on button
-    :param image_size:       image size (O.K.)
-    :type image_size:        (Default = (None))
-    :param image_subsample:  amount to reduce the size of the image
-    :type image_subsample:   amount to reduce the size of the image
-    :param tooltip:          text, that will appear when mouse hovers over the element
-    :type tooltip:           (str)
-    :param size:             (w,h) w=characters-wide, h=rows-high
-    :type size:              (int, int)
-    :param auto_size_button: True if button size is determined by button text
-    :type auto_size_button:  (bool)
-    :param button_color:     button color (foreground, background)
-    :type button_color:      (str, str) | str
-    :param font:             specifies the  font family, size, etc. Tuple or Single string format 'name size styles'. Styles: italic * roman bold normal underline overstrike
-    :type font:              (str or (str, int[, str]) or None)
-    :param bind_return_key:  (Default = False) If True, this button will appear to be clicked when return key is pressed in other elements such as Input and elements with return key options
-    :type bind_return_key:   (bool)
-    :param disabled:         set disable state for element (Default = False)
-    :type disabled:          (bool)
-    :param focus:            if focus should be set to this
-    :type focus:             idk_yetReally
-    :param pad:              Amount of padding to put around element in pixels (left/right, top/bottom) or ((left, right), (top, bottom)) or an int. If an int, then it's converted into a tuple (int, int)
-    :type pad:               (int, int) or ((int, int),(int,int)) or (int,(int,int)) or  ((int, int),int) | int
-    :param key:              key for uniquely identify this element (for window.find_element)
-    :type key:               str | int | tuple | object
-    :param border_width:     width of border around element
-    :type border_width:      (int)
-    :param metadata:         Anything you want to store along with this button
-    :type metadata:          (Any)
-    :param expand_x:         If True Element will expand in the Horizontal directions
-    :type expand_x:          (bool)
-    :param expand_y:         If True Element will expand in the Vertical directions
-    :type expand_y:          (bool)
-    :return:                 Button created
-    :rtype:                  (Button)
-    """
-
-    return Button(button_text=button_text, button_type=Button.TYPE.READ_FORM, image_filename=image_filename,
-                  image_data=image_data, image_size=image_size, image_subsample=image_subsample,
-                  border_width=border_width, tooltip=tooltip, size=size, disabled=disabled,
-                  auto_size_button=auto_size_button, button_color=button_color, font=font,
-                  bind_return_key=bind_return_key, focus=focus, pad=pad, key=key, metadata=metadata, expand_x=expand_x, expand_y=expand_y)
+        """
+        :param button_text:      text in the button
+        :type button_text:       (str)
+        :param image_filename:   image filename if there is a button image
+        :type image_filename:    image filename if there is a button image
+        :param image_data:       in-RAM image to be displayed on button
+        :type image_data:        in-RAM image to be displayed on button
+        :param image_size:       image size (O.K.)
+        :type image_size:        (Default = (None))
+        :param image_subsample:  amount to reduce the size of the image
+        :type image_subsample:   amount to reduce the size of the image
+        :param tooltip:          text, that will appear when mouse hovers over the element
+        :type tooltip:           (str)
+        :param size:             (w,h) w=characters-wide, h=rows-high
+        :type size:              (int, int)
+        :param auto_size_button: True if button size is determined by button text
+        :type auto_size_button:  (bool)
+        :param button_color:     button color (foreground, background)
+        :type button_color:      (str, str) | str
+        :param font:             specifies the  font family, size, etc. Tuple or Single string format 'name size styles'. Styles: italic * roman bold normal underline overstrike
+        :type font:              (str or (str, int[, str]) or None)
+        :param bind_return_key:  (Default = False) If True, this button will appear to be clicked when return key is pressed in other elements such as Input and elements with return key options
+        :type bind_return_key:   (bool)
+        :param disabled:         set disable state for element (Default = False)
+        :type disabled:          (bool)
+        :param focus:            if focus should be set to this
+        :type focus:             idk_yetReally
+        :param pad:              Amount of padding to put around element in pixels (left/right, top/bottom) or ((left, right), (top, bottom)) or an int. If an int, then it's converted into a tuple (int, int)
+        :type pad:               (int, int) or ((int, int),(int,int)) or (int,(int,int)) or  ((int, int),int) | int
+        :param key:              key for uniquely identify this element (for window.find_element)
+        :type key:               str | int | tuple | object
+        :param border_width:     width of border around element
+        :type border_width:      (int)
+        :param metadata:         Anything you want to store along with this button
+        :type metadata:          (Any)
+        :param expand_x:         If True Element will expand in the Horizontal directions
+        :type expand_x:          (bool)
+        :param expand_y:         If True Element will expand in the Vertical directions
+        :type expand_y:          (bool)
+        :return:                 Button created
+        :rtype:                  (Button)
+        """
+        super().__init__(button_text=button_text, button_type=Button.TYPE.READ_FORM, image_filename=image_filename,
+                    image_data=image_data, image_size=image_size, image_subsample=image_subsample,
+                    border_width=border_width, tooltip=tooltip, size=size, disabled=disabled,
+                    auto_size_button=auto_size_button, button_color=button_color, font=font,
+                    bind_return_key=bind_return_key, focus=focus, pad=pad, key=key, metadata=metadata, expand_x=expand_x, expand_y=expand_y)
 
 
 ReadFormButton = ReadButton
 
 
 # -------------------------  Realtime BUTTON Element lazy function  ------------------------- #
-def RealtimeButton(button_text, *, image_filename=None, image_data=None, image_size=(None, None), image_subsample=None,
+class RealtimeButton(Button):
+    def __init__(self, button_text, *, image_filename=None, image_data=None, image_size=(None, None), image_subsample=None,
                    border_width=None, tooltip=None, size=(None, None), auto_size_button=None, button_color=None,
                    font=None, disabled=False, bind_return_key=False, focus=False, pad=None, key=None, visible=True, metadata=None, expand_x=False, expand_y=False):
-    """
-    :param button_text:      text in the button
-    :type button_text:       (str)
-    :param image_filename:   image filename if there is a button image
-    :type image_filename:    image filename if there is a button image
-    :param image_data:       in-RAM image to be displayed on button
-    :type image_data:        in-RAM image to be displayed on button
-    :param image_size:       image size (O.K.)
-    :type image_size:        (Default = (None))
-    :param image_subsample:  amount to reduce the size of the image
-    :type image_subsample:   amount to reduce the size of the image
-    :param border_width:     width of border around element
-    :type border_width:      (int)
-    :param tooltip:          text, that will appear when mouse hovers over the element
-    :type tooltip:           (str)
-    :param size:             (w,h) w=characters-wide, h=rows-high
-    :type size:              (int, int)
-    :param auto_size_button: True if button size is determined by button text
-    :type auto_size_button:  (bool)
-    :param button_color:     button color (foreground, background)
-    :type button_color:      (str, str) | str
-    :param font:             specifies the  font family, size, etc. Tuple or Single string format 'name size styles'. Styles: italic * roman bold normal underline overstrike
-    :type font:              (str or (str, int[, str]) or None)
-    :param disabled:         set disable state for element (Default = False)
-    :type disabled:          (bool)
-    :param bind_return_key:  (Default = False) If True, this button will appear to be clicked when return key is pressed in other elements such as Input and elements with return key options
-    :type bind_return_key:   (bool)
-    :param focus:            if focus should be set to this
-    :type focus:             (bool)
-    :param pad:              Amount of padding to put around element in pixels (left/right, top/bottom) or ((left, right), (top, bottom)) or an int. If an int, then it's converted into a tuple (int, int)
-    :type pad:               (int, int) or ((int, int),(int,int)) or (int,(int,int)) or  ((int, int),int) | int
-    :param key:              key for uniquely identify this element (for window.find_element)
-    :type key:               str | int | tuple | object
-    :param visible:          set initial visibility state of the Button
-    :type visible:           (bool)
-    :param metadata:         Anything you want to store along with this button
-    :type metadata:          (Any)
-    :param expand_x:         If True Element will expand in the Horizontal directions
-    :type expand_x:          (bool)
-    :param expand_y:         If True Element will expand in the Vertical directions
-    :type expand_y:          (bool)
-    :return:                 Button created
-    :rtype:                  (Button)
-    """
-    return Button(button_text=button_text, button_type=Button.TYPE.REALTIME, image_filename=image_filename,
-                  image_data=image_data, image_size=image_size, image_subsample=image_subsample,
-                  border_width=border_width, tooltip=tooltip, disabled=disabled, size=size,
-                  auto_size_button=auto_size_button, button_color=button_color, font=font,
-                  bind_return_key=bind_return_key, focus=focus, pad=pad, key=key, visible=visible, metadata=metadata, expand_x=expand_x, expand_y=expand_y)
+        """
+        :param button_text:      text in the button
+        :type button_text:       (str)
+        :param image_filename:   image filename if there is a button image
+        :type image_filename:    image filename if there is a button image
+        :param image_data:       in-RAM image to be displayed on button
+        :type image_data:        in-RAM image to be displayed on button
+        :param image_size:       image size (O.K.)
+        :type image_size:        (Default = (None))
+        :param image_subsample:  amount to reduce the size of the image
+        :type image_subsample:   amount to reduce the size of the image
+        :param border_width:     width of border around element
+        :type border_width:      (int)
+        :param tooltip:          text, that will appear when mouse hovers over the element
+        :type tooltip:           (str)
+        :param size:             (w,h) w=characters-wide, h=rows-high
+        :type size:              (int, int)
+        :param auto_size_button: True if button size is determined by button text
+        :type auto_size_button:  (bool)
+        :param button_color:     button color (foreground, background)
+        :type button_color:      (str, str) | str
+        :param font:             specifies the  font family, size, etc. Tuple or Single string format 'name size styles'. Styles: italic * roman bold normal underline overstrike
+        :type font:              (str or (str, int[, str]) or None)
+        :param disabled:         set disable state for element (Default = False)
+        :type disabled:          (bool)
+        :param bind_return_key:  (Default = False) If True, this button will appear to be clicked when return key is pressed in other elements such as Input and elements with return key options
+        :type bind_return_key:   (bool)
+        :param focus:            if focus should be set to this
+        :type focus:             (bool)
+        :param pad:              Amount of padding to put around element in pixels (left/right, top/bottom) or ((left, right), (top, bottom)) or an int. If an int, then it's converted into a tuple (int, int)
+        :type pad:               (int, int) or ((int, int),(int,int)) or (int,(int,int)) or  ((int, int),int) | int
+        :param key:              key for uniquely identify this element (for window.find_element)
+        :type key:               str | int | tuple | object
+        :param visible:          set initial visibility state of the Button
+        :type visible:           (bool)
+        :param metadata:         Anything you want to store along with this button
+        :type metadata:          (Any)
+        :param expand_x:         If True Element will expand in the Horizontal directions
+        :type expand_x:          (bool)
+        :param expand_y:         If True Element will expand in the Vertical directions
+        :type expand_y:          (bool)
+        :return:                 Button created
+        :rtype:                  (Button)
+        """
+        super().__init__(button_text=button_text, button_type=Button.TYPE.REALTIME, image_filename=image_filename,
+                    image_data=image_data, image_size=image_size, image_subsample=image_subsample,
+                    border_width=border_width, tooltip=tooltip, disabled=disabled, size=size,
+                    auto_size_button=auto_size_button, button_color=button_color, font=font,
+                    bind_return_key=bind_return_key, focus=focus, pad=pad, key=key, visible=visible, metadata=metadata, expand_x=expand_x, expand_y=expand_y)
 
 
 # -------------------------  Dummy BUTTON Element lazy function  ------------------------- #
-def DummyButton(button_text, *, image_filename=None, image_data=None, image_size=(None, None), image_subsample=None,
+class DummyButton(Button):
+    def __init__(self, button_text, *, image_filename=None, image_data=None, image_size=(None, None), image_subsample=None,
                 border_width=None, tooltip=None, size=(None, None), auto_size_button=None, button_color=None, font=None,
                 disabled=False, bind_return_key=False, focus=False, pad=None, key=None, visible=True, metadata=None, expand_x=False, expand_y=False):
-    """
-    This is a special type of Button.
+        """
+        This is a special type of Button.
 
-    It will close the window but NOT send an event that the window has been closed.
+        It will close the window but NOT send an event that the window has been closed.
 
-    It's used in conjunction with non-blocking windows to silently close them.  They are used to
-    implement the non-blocking popup windows. They're also found in some Demo Programs, so look there for proper use.
+        It's used in conjunction with non-blocking windows to silently close them.  They are used to
+        implement the non-blocking popup windows. They're also found in some Demo Programs, so look there for proper use.
 
-    :param button_text:      text in the button
-    :type button_text:       (str)
-    :param image_filename:   image filename if there is a button image
-    :type image_filename:    image filename if there is a button image
-    :param image_data:       in-RAM image to be displayed on button
-    :type image_data:        in-RAM image to be displayed on button
-    :param image_size:       image size (O.K.)
-    :type image_size:        (Default = (None))
-    :param image_subsample:  amount to reduce the size of the image
-    :type image_subsample:   amount to reduce the size of the image
-    :param border_width:     width of border around element
-    :type border_width:      (int)
-    :param tooltip:          text, that will appear when mouse hovers over the element
-    :type tooltip:           (str)
-    :param size:             (w,h) w=characters-wide, h=rows-high
-    :type size:              (int, int)
-    :param auto_size_button: True if button size is determined by button text
-    :type auto_size_button:  (bool)
-    :param button_color:     button color (foreground, background)
-    :type button_color:      (str, str) | str
-    :param font:             specifies the  font family, size, etc. Tuple or Single string format 'name size styles'. Styles: italic * roman bold normal underline overstrike
-    :type font:              (str or (str, int[, str]) or None)
-    :param disabled:         set disable state for element (Default = False)
-    :type disabled:          (bool)
-    :param bind_return_key:  (Default = False) If True, this button will appear to be clicked when return key is pressed in other elements such as Input and elements with return key options
-    :type bind_return_key:   (bool)
-    :param focus:            if focus should be set to this
-    :type focus:             (bool)
-    :param pad:              Amount of padding to put around element in pixels (left/right, top/bottom) or ((left, right), (top, bottom)) or an int. If an int, then it's converted into a tuple (int, int)
-    :type pad:               (int, int) or ((int, int),(int,int)) or (int,(int,int)) or  ((int, int),int) | int
-    :param key:              key for uniquely identify this element (for window.find_element)
-    :type key:               str | int | tuple | object
-    :param visible:          set initial visibility state of the Button
-    :type visible:           (bool)
-    :param metadata:         Anything you want to store along with this button
-    :type metadata:          (Any)
-    :param expand_x:         If True Element will expand in the Horizontal directions
-    :type expand_x:          (bool)
-    :param expand_y:         If True Element will expand in the Vertical directions
-    :type expand_y:          (bool)
-    :return:                 returns a button
-    :rtype:                  (Button)
-    """
-    return Button(button_text=button_text, button_type=Button.TYPE.CLOSES_WIN_ONLY, image_filename=image_filename,
-                  image_data=image_data, image_size=image_size, image_subsample=image_subsample,
-                  border_width=border_width, tooltip=tooltip, size=size, auto_size_button=auto_size_button,
-                  button_color=button_color, font=font, disabled=disabled, bind_return_key=bind_return_key, focus=focus,
-                  pad=pad, key=key, visible=visible, metadata=metadata, expand_x=expand_x, expand_y=expand_y)
+        :param button_text:      text in the button
+        :type button_text:       (str)
+        :param image_filename:   image filename if there is a button image
+        :type image_filename:    image filename if there is a button image
+        :param image_data:       in-RAM image to be displayed on button
+        :type image_data:        in-RAM image to be displayed on button
+        :param image_size:       image size (O.K.)
+        :type image_size:        (Default = (None))
+        :param image_subsample:  amount to reduce the size of the image
+        :type image_subsample:   amount to reduce the size of the image
+        :param border_width:     width of border around element
+        :type border_width:      (int)
+        :param tooltip:          text, that will appear when mouse hovers over the element
+        :type tooltip:           (str)
+        :param size:             (w,h) w=characters-wide, h=rows-high
+        :type size:              (int, int)
+        :param auto_size_button: True if button size is determined by button text
+        :type auto_size_button:  (bool)
+        :param button_color:     button color (foreground, background)
+        :type button_color:      (str, str) | str
+        :param font:             specifies the  font family, size, etc. Tuple or Single string format 'name size styles'. Styles: italic * roman bold normal underline overstrike
+        :type font:              (str or (str, int[, str]) or None)
+        :param disabled:         set disable state for element (Default = False)
+        :type disabled:          (bool)
+        :param bind_return_key:  (Default = False) If True, this button will appear to be clicked when return key is pressed in other elements such as Input and elements with return key options
+        :type bind_return_key:   (bool)
+        :param focus:            if focus should be set to this
+        :type focus:             (bool)
+        :param pad:              Amount of padding to put around element in pixels (left/right, top/bottom) or ((left, right), (top, bottom)) or an int. If an int, then it's converted into a tuple (int, int)
+        :type pad:               (int, int) or ((int, int),(int,int)) or (int,(int,int)) or  ((int, int),int) | int
+        :param key:              key for uniquely identify this element (for window.find_element)
+        :type key:               str | int | tuple | object
+        :param visible:          set initial visibility state of the Button
+        :type visible:           (bool)
+        :param metadata:         Anything you want to store along with this button
+        :type metadata:          (Any)
+        :param expand_x:         If True Element will expand in the Horizontal directions
+        :type expand_x:          (bool)
+        :param expand_y:         If True Element will expand in the Vertical directions
+        :type expand_y:          (bool)
+        :return:                 returns a button
+        :rtype:                  (Button)
+        """
+        super().__init__(button_text=button_text, button_type=Button.TYPE.CLOSES_WIN_ONLY, image_filename=image_filename,
+                    image_data=image_data, image_size=image_size, image_subsample=image_subsample,
+                    border_width=border_width, tooltip=tooltip, size=size, auto_size_button=auto_size_button,
+                    button_color=button_color, font=font, disabled=disabled, bind_return_key=bind_return_key, focus=focus,
+                    pad=pad, key=key, visible=visible, metadata=metadata, expand_x=expand_x, expand_y=expand_y)
 
 
 # -------------------------  Calendar Chooser Button lazy function  ------------------------- #
-def CalendarButton(button_text, *, target=(ThisRow, -1), close_when_date_chosen=True, default_date_m_d_y=(None, None, None),
+class CalendarButton(Button):
+    def __init__(self, button_text, *, target=(ThisRow, -1), close_when_date_chosen=True, default_date_m_d_y=(None, None, None),
                    image_filename=None, image_data=None, image_size=(None, None),
                    image_subsample=None, tooltip=None, border_width=None, size=(None, None), auto_size_button=None,
                    button_color=None, disabled=False, font=None, bind_return_key=False, focus=False, pad=None, enable_events=None,
                    key=None, visible=True, locale=None, format='%Y-%m-%d %H:%M:%S', begin_at_sunday_plus=0, month_names=None, day_abbreviations=None,
                    title='Choose Date',
                    no_titlebar=True, location=(None, None), metadata=None, expand_x=False, expand_y=False):
-    """
-    Button that will show a calendar chooser window.  Fills in the target element with result
+        """
+        Button that will show a calendar chooser window.  Fills in the target element with result
 
-    :param button_text:            text in the button
-    :type button_text:             (str)
-    :param target:                 Key or "coordinate" (see docs) of target element
-    :type target:                  (int, int) | Any
-    :param close_when_date_chosen: (Default = True)
-    :type close_when_date_chosen:  bool
-    :param default_date_m_d_y:     Beginning date to show
-    :type default_date_m_d_y:      (int, int or None, int)
-    :param image_filename:         image filename if there is a button image
-    :type image_filename:          image filename if there is a button image
-    :param image_data:             in-RAM image to be displayed on button
-    :type image_data:              in-RAM image to be displayed on button
-    :param image_size:             image size (O.K.)
-    :type image_size:              (Default = (None))
-    :param image_subsample:        amount to reduce the size of the image
-    :type image_subsample:         amount to reduce the size of the image
-    :param tooltip:                text, that will appear when mouse hovers over the element
-    :type tooltip:                 (str)
-    :param border_width:           width of border around element
-    :type border_width:            width of border around element
-    :param size:                   (w,h) w=characters-wide, h=rows-high
-    :type size:                    (int, int)
-    :param auto_size_button:       True if button size is determined by button text
-    :type auto_size_button:        (bool)
-    :param button_color:           button color (foreground, background)
-    :type button_color:            (str, str) | str
-    :param disabled:               set disable state for element (Default = False)
-    :type disabled:                (bool)
-    :param font:                   specifies the  font family, size, etc. Tuple or Single string format 'name size styles'. Styles: italic * roman bold normal underline overstrike
-    :type font:                    (str or (str, int[, str]) or None)
-    :param bind_return_key:  (Default = False) If True, this button will appear to be clicked when return key is pressed in other elements such as Input and elements with return key options
-    :type bind_return_key:         bool
-    :param focus:                  if focus should be set to this
-    :type focus:                   bool
-    :param pad:                    Amount of padding to put around element in pixels (left/right, top/bottom) or ((left, right), (top, bottom)) or an int. If an int, then it's converted into a tuple (int, int)
-    :type pad:                     (int, int) or ((int, int),(int,int)) or (int,(int,int)) or  ((int, int),int) | int
-    :param key:                    key for uniquely identify this element (for window.find_element)
-    :type key:                     str | int | tuple | object
-    :param locale:                 defines the locale used to get day names
-    :type locale:                  str
-    :param format:                 formats result using this strftime format
-    :type format:                  str
-    :param begin_at_sunday_plus:   Determines the left-most day in the display. 0=sunday, 1=monday, etc
-    :type begin_at_sunday_plus:    (int)
-    :param month_names:            optional list of month names to use (should be 12 items)
-    :type month_names:             List[str]
-    :param day_abbreviations:      optional list of abbreviations to display as the day of week
-    :type day_abbreviations:       List[str]
-    :param title:                  Title shown on the date chooser window
-    :type title:                   (str)
-    :param no_titlebar:            if True no titlebar will be shown on the date chooser window
-    :type no_titlebar:             bool
-    :param location:               Location on the screen (x,y) to show the calendar popup window
-    :type location:                (int, int)
-    :param visible:                set initial visibility state of the Button
-    :type visible:                 (bool)
-    :param metadata:               Anything you want to store along with this button
-    :type metadata:                (Any)
-    :param expand_x:               If True Element will expand in the Horizontal directions
-    :type expand_x:                (bool)
-    :param expand_y:               If True Element will expand in the Vertical directions
-    :type expand_y:                (bool)
-    :return:                       returns a button
-    :rtype:                        (Button)
-    """
-    button = Button(button_text=button_text, button_type=Button.TYPE.CALENDAR_CHOOSER, target=target,
-                    image_filename=image_filename, image_data=image_data, image_size=image_size,
-                    image_subsample=image_subsample, border_width=border_width, tooltip=tooltip, size=size,
-                    auto_size_button=auto_size_button, button_color=button_color, font=font, disabled=disabled, enable_events=enable_events,
-                    bind_return_key=bind_return_key, focus=focus, pad=pad, key=key, visible=visible, metadata=metadata, expand_x=expand_x, expand_y=expand_y)
-    button.calendar_close_when_chosen = close_when_date_chosen
-    button.calendar_default_date_M_D_Y = default_date_m_d_y
-    button.calendar_locale = locale
-    button.calendar_format = format
-    button.calendar_no_titlebar = no_titlebar
-    button.calendar_location = location
-    button.calendar_begin_at_sunday_plus = begin_at_sunday_plus
-    button.calendar_month_names = month_names
-    button.calendar_day_abbreviations = day_abbreviations
-    button.calendar_title = title
-
-    return button
+        :param button_text:            text in the button
+        :type button_text:             (str)
+        :param target:                 Key or "coordinate" (see docs) of target element
+        :type target:                  (int, int) | Any
+        :param close_when_date_chosen: (Default = True)
+        :type close_when_date_chosen:  bool
+        :param default_date_m_d_y:     Beginning date to show
+        :type default_date_m_d_y:      (int, int or None, int)
+        :param image_filename:         image filename if there is a button image
+        :type image_filename:          image filename if there is a button image
+        :param image_data:             in-RAM image to be displayed on button
+        :type image_data:              in-RAM image to be displayed on button
+        :param image_size:             image size (O.K.)
+        :type image_size:              (Default = (None))
+        :param image_subsample:        amount to reduce the size of the image
+        :type image_subsample:         amount to reduce the size of the image
+        :param tooltip:                text, that will appear when mouse hovers over the element
+        :type tooltip:                 (str)
+        :param border_width:           width of border around element
+        :type border_width:            width of border around element
+        :param size:                   (w,h) w=characters-wide, h=rows-high
+        :type size:                    (int, int)
+        :param auto_size_button:       True if button size is determined by button text
+        :type auto_size_button:        (bool)
+        :param button_color:           button color (foreground, background)
+        :type button_color:            (str, str) | str
+        :param disabled:               set disable state for element (Default = False)
+        :type disabled:                (bool)
+        :param font:                   specifies the  font family, size, etc. Tuple or Single string format 'name size styles'. Styles: italic * roman bold normal underline overstrike
+        :type font:                    (str or (str, int[, str]) or None)
+        :param bind_return_key:  (Default = False) If True, this button will appear to be clicked when return key is pressed in other elements such as Input and elements with return key options
+        :type bind_return_key:         bool
+        :param focus:                  if focus should be set to this
+        :type focus:                   bool
+        :param pad:                    Amount of padding to put around element in pixels (left/right, top/bottom) or ((left, right), (top, bottom)) or an int. If an int, then it's converted into a tuple (int, int)
+        :type pad:                     (int, int) or ((int, int),(int,int)) or (int,(int,int)) or  ((int, int),int) | int
+        :param key:                    key for uniquely identify this element (for window.find_element)
+        :type key:                     str | int | tuple | object
+        :param locale:                 defines the locale used to get day names
+        :type locale:                  str
+        :param format:                 formats result using this strftime format
+        :type format:                  str
+        :param begin_at_sunday_plus:   Determines the left-most day in the display. 0=sunday, 1=monday, etc
+        :type begin_at_sunday_plus:    (int)
+        :param month_names:            optional list of month names to use (should be 12 items)
+        :type month_names:             List[str]
+        :param day_abbreviations:      optional list of abbreviations to display as the day of week
+        :type day_abbreviations:       List[str]
+        :param title:                  Title shown on the date chooser window
+        :type title:                   (str)
+        :param no_titlebar:            if True no titlebar will be shown on the date chooser window
+        :type no_titlebar:             bool
+        :param location:               Location on the screen (x,y) to show the calendar popup window
+        :type location:                (int, int)
+        :param visible:                set initial visibility state of the Button
+        :type visible:                 (bool)
+        :param metadata:               Anything you want to store along with this button
+        :type metadata:                (Any)
+        :param expand_x:               If True Element will expand in the Horizontal directions
+        :type expand_x:                (bool)
+        :param expand_y:               If True Element will expand in the Vertical directions
+        :type expand_y:                (bool)
+        :return:                       returns a button
+        :rtype:                        (Button)
+        """
+        super().__init__(button_text=button_text, button_type=Button.TYPE.CALENDAR_CHOOSER, target=target,
+                        image_filename=image_filename, image_data=image_data, image_size=image_size,
+                        image_subsample=image_subsample, border_width=border_width, tooltip=tooltip, size=size,
+                        auto_size_button=auto_size_button, button_color=button_color, font=font, disabled=disabled, enable_events=enable_events,
+                        bind_return_key=bind_return_key, focus=focus, pad=pad, key=key, visible=visible, metadata=metadata, expand_x=expand_x, expand_y=expand_y)
+        self.calendar_close_when_chosen = close_when_date_chosen
+        self.calendar_default_date_M_D_Y = default_date_m_d_y
+        self.calendar_locale = locale
+        self.calendar_format = format
+        self.calendar_no_titlebar = no_titlebar
+        self.calendar_location = location
+        self.calendar_begin_at_sunday_plus = begin_at_sunday_plus
+        self.calendar_month_names = month_names
+        self.calendar_day_abbreviations = day_abbreviations
+        self.calendar_title = title
 
 
 # -------------------------  Calendar Chooser Button lazy function  ------------------------- #
-def ColorChooserButton(button_text, *, target=(ThisRow, -1), image_filename=None, image_data=None, image_size=(None, None),
+class ColorChooserButton(Button):
+    def __init__(self, button_text, *, target=(ThisRow, -1), image_filename=None, image_data=None, image_size=(None, None),
                        image_subsample=None, tooltip=None, border_width=None, size=(None, None), auto_size_button=None,
                        button_color=None, disabled=False, font=None, bind_return_key=False, focus=False, pad=None,
                        key=None, default_color=None, visible=True, metadata=None, expand_x=False, expand_y=False):
-    """
-
-    :param button_text:      text in the button
-    :type button_text:       (str)
-    :param target:           key or (row,col) target for the button. Note that -1 for column means 1 element to the left of this one. The constant ThisRow is used to indicate the current row. The Button itself is a valid target for some types of button
-    :type target:            str | (int, int)
-    :type image_filename:    (str)
-    :param image_filename:   image filename if there is a button image. GIFs and PNGs only.
-    :type image_filename:    (str)
-    :param image_data:       Raw or Base64 representation of the image to put on button. Choose either filename or data
-    :type image_data:        bytes | str
-    :param image_size:       Size of the image in pixels (width, height)
-    :type image_size:        (int, int)
-    :param image_subsample:  amount to reduce the size of the image. Divides the size by this number. 2=1/2, 3=1/3, 4=1/4, etc
-    :type image_subsample:   (int)
-    :param tooltip:          text, that will appear when mouse hovers over the element
-    :type tooltip:           (str)
-    :param border_width:     width of border around element
-    :type border_width:      (int)
-    :param size:             (w,h) w=characters-wide, h=rows-high
-    :type size:              (int, int)
-    :param auto_size_button: True if button size is determined by button text
-    :type auto_size_button:  (bool)
-    :param button_color:     button color (foreground, background)
-    :type button_color:      (str, str) | str
-    :param disabled:         set disable state for element (Default = False)
-    :type disabled:          (bool)
-    :param font:             specifies the  font family, size, etc. Tuple or Single string format 'name size styles'. Styles: italic * roman bold normal underline overstrike
-    :type font:              (str or (str, int[, str]) or None)
-    :param bind_return_key:  (Default = False) If True, this button will appear to be clicked when return key is pressed in other elements such as Input and elements with return key options
-    :type bind_return_key:   (bool)
-    :param focus:            Determines if initial focus should go to this element.
-    :type focus:             (bool)
-    :param pad:              Amount of padding to put around element in pixels (left/right, top/bottom) or ((left, right), (top, bottom)) or an int. If an int, then it's converted into a tuple (int, int)
-    :type pad:               (int, int) or ((int, int),(int,int)) or (int,(int,int)) or  ((int, int),int) | int
-    :param key:              key for uniquely identify this element (for window.find_element)
-    :type key:               str | int | tuple | object
-    :param default_color:    Color to be sent to tkinter to use as the default color
-    :type default_color:     str
-    :param visible:          set initial visibility state of the Button
-    :type visible:           (bool)
-    :param metadata:         User metadata that can be set to ANYTHING
-    :type metadata:          (Any)
-    :param expand_x:         If True Element will expand in the Horizontal directions
-    :type expand_x:          (bool)
-    :param expand_y:         If True Element will expand in the Vertical directions
-    :type expand_y:          (bool)
-    :return:                 returns a button
-    :rtype:                  (Button)
-    """
-    button = Button(button_text=button_text, button_type=Button.TYPE.COLOR_CHOOSER, target=target,
-                  image_filename=image_filename, image_data=image_data, image_size=image_size,
-                  image_subsample=image_subsample, border_width=border_width, tooltip=tooltip, size=size,
-                  auto_size_button=auto_size_button, button_color=button_color, font=font, disabled=disabled,
-                  bind_return_key=bind_return_key, focus=focus, pad=pad, key=key, visible=visible, metadata=metadata, expand_x=expand_x, expand_y=expand_y)
-    button.default_color = default_color
-    return button
+        """
+        :param button_text:      text in the button
+        :type button_text:       (str)
+        :param target:           key or (row,col) target for the button. Note that -1 for column means 1 element to the left of this one. The constant ThisRow is used to indicate the current row. The Button itself is a valid target for some types of button
+        :type target:            str | (int, int)
+        :type image_filename:    (str)
+        :param image_filename:   image filename if there is a button image. GIFs and PNGs only.
+        :type image_filename:    (str)
+        :param image_data:       Raw or Base64 representation of the image to put on button. Choose either filename or data
+        :type image_data:        bytes | str
+        :param image_size:       Size of the image in pixels (width, height)
+        :type image_size:        (int, int)
+        :param image_subsample:  amount to reduce the size of the image. Divides the size by this number. 2=1/2, 3=1/3, 4=1/4, etc
+        :type image_subsample:   (int)
+        :param tooltip:          text, that will appear when mouse hovers over the element
+        :type tooltip:           (str)
+        :param border_width:     width of border around element
+        :type border_width:      (int)
+        :param size:             (w,h) w=characters-wide, h=rows-high
+        :type size:              (int, int)
+        :param auto_size_button: True if button size is determined by button text
+        :type auto_size_button:  (bool)
+        :param button_color:     button color (foreground, background)
+        :type button_color:      (str, str) | str
+        :param disabled:         set disable state for element (Default = False)
+        :type disabled:          (bool)
+        :param font:             specifies the  font family, size, etc. Tuple or Single string format 'name size styles'. Styles: italic * roman bold normal underline overstrike
+        :type font:              (str or (str, int[, str]) or None)
+        :param bind_return_key:  (Default = False) If True, this button will appear to be clicked when return key is pressed in other elements such as Input and elements with return key options
+        :type bind_return_key:   (bool)
+        :param focus:            Determines if initial focus should go to this element.
+        :type focus:             (bool)
+        :param pad:              Amount of padding to put around element in pixels (left/right, top/bottom) or ((left, right), (top, bottom)) or an int. If an int, then it's converted into a tuple (int, int)
+        :type pad:               (int, int) or ((int, int),(int,int)) or (int,(int,int)) or  ((int, int),int) | int
+        :param key:              key for uniquely identify this element (for window.find_element)
+        :type key:               str | int | tuple | object
+        :param default_color:    Color to be sent to tkinter to use as the default color
+        :type default_color:     str
+        :param visible:          set initial visibility state of the Button
+        :type visible:           (bool)
+        :param metadata:         User metadata that can be set to ANYTHING
+        :type metadata:          (Any)
+        :param expand_x:         If True Element will expand in the Horizontal directions
+        :type expand_x:          (bool)
+        :param expand_y:         If True Element will expand in the Vertical directions
+        :type expand_y:          (bool)
+        :return:                 returns a button
+        :rtype:                  (Button)
+        """
+        super().__init__(button_text=button_text, button_type=Button.TYPE.COLOR_CHOOSER, target=target,
+                    image_filename=image_filename, image_data=image_data, image_size=image_size,
+                    image_subsample=image_subsample, border_width=border_width, tooltip=tooltip, size=size,
+                    auto_size_button=auto_size_button, button_color=button_color, font=font, disabled=disabled,
+                    bind_return_key=bind_return_key, focus=focus, pad=pad, key=key, visible=visible, metadata=metadata, expand_x=expand_x, expand_y=expand_y)
+        self.default_color = default_color
 
 #####################################  -----  BUTTON Functions   ------ ##################################################
 
