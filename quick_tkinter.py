@@ -546,7 +546,7 @@ class COLORS(MyConstEnum):
                         (YELLOWS[0], GREENS[3]),
                         (YELLOWS[0], BLUES[2]))
 
-COLOR_SYSTEM_DEFAULT = '1234567890'  # A Magic Number kind of signal to PySimpleGUI that the color should not be set at all
+COLOR_SYSTEM_DEFAULT = None  # A Magic Number kind of signal to PySimpleGUI that the color should not be set at all
 OFFICIAL_PYSIMPLEGUI_BUTTON_COLOR = ('white', COLORS.BLUES[0])
 
 # The "default PySimpleGUI theme"
@@ -617,11 +617,11 @@ class DEFAULTS:
     ERROR_BUTTON_COLOR = ("#FFFFFF", "#FF0000")
     BACKGROUND_COLOR = None
     ELEMENT_BACKGROUND_COLOR = None
-    ELEMENT_TEXT_COLOR = COLOR_SYSTEM_DEFAULT
+    ELEMENT_TEXT_COLOR = None
     TEXT_ELEMENT_BACKGROUND_COLOR = None
-    TEXT_COLOR = COLOR_SYSTEM_DEFAULT
-    INPUT_ELEMENTS_BACKGROUND_COLOR = COLOR_SYSTEM_DEFAULT
-    INPUT_TEXT_COLOR = COLOR_SYSTEM_DEFAULT
+    TEXT_COLOR = None
+    INPUT_ELEMENTS_BACKGROUND_COLOR = None
+    INPUT_TEXT_COLOR = None
     SCROLLBAR_COLOR = None
     BUTTON_COLOR = ('white', COLORS.BLUES[0])  # Foreground, Background (None, None) == System Default
     # BUTTON_COLOR = (YELLOWS[0], PURPLES[0])    # (Text, Background) or (Color "on", Color) as a way to remember
@@ -1823,18 +1823,18 @@ class Element[widget_type: tk.Widget](ABC):
         if menu:
             top_menu = tk.Menu(self._toplevel_form.tk_root, tearoff=self._toplevel_form.right_click_menu_tearoff, tearoffcommand=self._tearoff_menu_callback)
 
-            if self._toplevel_form.right_click_menu_background_color not in (COLOR_SYSTEM_DEFAULT, None):
+            if self._toplevel_form.right_click_menu_background_color is not None:
                 top_menu.config(bg=self._toplevel_form.right_click_menu_background_color)
-            if self._toplevel_form.right_click_menu_text_color not in (COLOR_SYSTEM_DEFAULT, None):
+            if self._toplevel_form.right_click_menu_text_color is not None:
                 top_menu.config(fg=self._toplevel_form.right_click_menu_text_color)
-            if self._toplevel_form.right_click_menu_disabled_text_color not in (COLOR_SYSTEM_DEFAULT, None):
+            if self._toplevel_form.right_click_menu_disabled_text_color is not None:
                 top_menu.config(disabledforeground=self._toplevel_form.right_click_menu_disabled_text_color)
             if self._toplevel_form.right_click_menu_font is not None:
                 top_menu.config(font=self._toplevel_form.right_click_menu_font)
 
-            if self._toplevel_form.right_click_menu_selected_colors[0] not in (COLOR_SYSTEM_DEFAULT, None):
+            if self._toplevel_form.right_click_menu_selected_colors[0] is not None:
                 top_menu.config(activeforeground=self._toplevel_form.right_click_menu_selected_colors[0])
-            if self._toplevel_form.right_click_menu_selected_colors[1] not in (COLOR_SYSTEM_DEFAULT, None):
+            if self._toplevel_form.right_click_menu_selected_colors[1] is not None:
                 top_menu.config(activebackground=self._toplevel_form.right_click_menu_selected_colors[1])
             _add_menu_item(top_menu=top_menu, sub_menu_info=menu[1], element=self, right_click_menu=True)
             self.tk_right_click_menu = top_menu
@@ -2135,16 +2135,16 @@ class Element[widget_type: tk.Widget](ABC):
 
     def _get_default_configure_dict(self):
         res = {}
-        if self.background_color not in (None, COLOR_SYSTEM_DEFAULT):
+        if self.background_color is not None:
             res['background'] = self.background_color
-        if self.text_color not in (None, COLOR_SYSTEM_DEFAULT):
+        if self.text_color is not None:
             res['foreground'] = self.text_color
 
         res['highlightthickness'] = 0
 
         return res
     
-    def _modify_config_dict(self, config_dict):  # noqa: B027
+    def _modify_config_dict(self, config_dict:dict[str]):  # noqa: B027
         pass
 
     @typing.final
@@ -2203,6 +2203,7 @@ class Element[widget_type: tk.Widget](ABC):
             config_dict = self._get_default_configure_dict()
         # allows each element to modify the default config dict
         self._modify_config_dict(config_dict)
+        config_dict = {kw: arg for kw, arg in config_dict.items() if arg is not None}
         self._widget_to_config.configure(**config_dict)
 
         # anything that needs to be done before the widget gets packed
@@ -2372,7 +2373,7 @@ class Element[widget_type: tk.Widget](ABC):
             'activeforeground': self._toplevel_form.right_click_menu_selected_colors[0],
             'activebackground': self._toplevel_form.right_click_menu_selected_colors[1]
         }
-        menu_dict = {key: val for key, val in menu_dict.items() if val not in (COLOR_SYSTEM_DEFAULT, None)}
+        menu_dict = {key: val for key, val in menu_dict.items() if val is not None}
         top_menu = tk.Menu(
             master=self._toplevel_form.tk_root,
             cnf=menu_dict,
@@ -2553,7 +2554,7 @@ class Container(ABCWholeMro):
                         row_fill_direction = tk.NONE
                 
                 tk_row_frame.pack(side=tk.TOP, anchor=anchor, padx=0, pady=0, expand=tk_row_frame.row_should_expand, fill=row_fill_direction)
-                if self.background_color not in {None, COLOR_SYSTEM_DEFAULT}:
+                if self.background_color is not None:
                     tk_row_frame.configure(background=self.background_color)
 
     def __iter__(self):
@@ -2901,7 +2902,7 @@ class Input(_InputElementReadonlyable[tk.Entry]):
     
     @property
     def disabled_readonly_text_color(self):
-        return self._disabled_readonly_text_color if self._disabled_readonly_text_color not in {None, COLOR_SYSTEM_DEFAULT} else self.text_color
+        return self._disabled_readonly_text_color if self._disabled_readonly_text_color is not None else self.text_color
 
 
     @_ensure_widget_created
@@ -2950,19 +2951,19 @@ class Input(_InputElementReadonlyable[tk.Entry]):
 
     @override
     def _modify_config_dict(self, config_dict):
-        if self.selected_background_color not in (None, COLOR_SYSTEM_DEFAULT):
+        if self.selected_background_color is not None:
             config_dict['selectbackground'] = self.selected_background_color
         elif 'fg' in config_dict:
             config_dict['selectbackground'] = self.text_color
 
-        if self.selected_text_color not in (None, COLOR_SYSTEM_DEFAULT):
+        if self.selected_text_color is not None:
             config_dict['selectforeground'] = self.selected_text_color
         elif 'background' in config_dict:
             config_dict['selectforeground'] = self.background_color
 
-        if self.disabled_readonly_background_color not in (None, COLOR_SYSTEM_DEFAULT):
+        if self.disabled_readonly_background_color is not None:
             config_dict['readonlybackground'] = self.disabled_readonly_background_color
-        if self._disabled_readonly_text_color not in (None, COLOR_SYSTEM_DEFAULT) and self._disabled:
+        if self._disabled_readonly_text_color is not None and self._disabled:
             config_dict['fg'] = self._disabled_readonly_text_color
 
     @override
@@ -3148,9 +3149,9 @@ class Combo(_InputElementReadonlyable[ttk.Combobox]):
             combostyle.configure(style_name, fieldbackground=self.background_color)
 
         if self.read_only is True:
-            if text_color not in (None, COLOR_SYSTEM_DEFAULT):
+            if text_color is not None:
                 combostyle.configure(style_name, selectforeground=text_color)
-            if background_color not in (None, COLOR_SYSTEM_DEFAULT):
+            if background_color is not None:
                 combostyle.configure(style_name, selectbackground=background_color)
 
 
@@ -3162,8 +3163,8 @@ class Combo(_InputElementReadonlyable[ttk.Combobox]):
 
         # make tcl call to deal with colors for the drop-down formatting
         try:
-            if self.background_color not in (None, COLOR_SYSTEM_DEFAULT) and \
-                self._text_color not in (None, COLOR_SYSTEM_DEFAULT):
+            if self.background_color is not None and \
+                self._text_color is not None:
                 self._widget.tk.eval(f"[ttk::combobox::PopdownWindow {self._widget}].f.l configure -foreground {self._text_color} -background {self.background_color} -selectforeground {self.background_color} -selectbackground {self._text_color} -font {self._dropdown_newfont}")
         except Exception:
             pass    # going to let this one slide
@@ -3221,24 +3222,24 @@ class Combo(_InputElementReadonlyable[ttk.Combobox]):
         config_dict = {}
         map_dict = {}
         try:
-            if self._text_color not in (None, COLOR_SYSTEM_DEFAULT):
+            if self._text_color is not None:
                 config_dict['foreground'] = self._text_color
                 config_dict['selectbackground'] = self._text_color
                 config_dict['insertcolor'] = self._text_color
                 map_dict['fieldforeground'] = [('readonly', self._text_color)]
-            if self.background_color not in (None, COLOR_SYSTEM_DEFAULT):
+            if self.background_color is not None:
                 config_dict['selectforeground'] = self.background_color
                 map_dict['fieldbackground'] = [('readonly', self.background_color)]
                 config_dict['fieldbackground'] = self.background_color
 
-            if self.button_arrow_color not in (None, COLOR_SYSTEM_DEFAULT):
+            if self.button_arrow_color is not None:
                 config_dict['arrowcolor'] = self.button_arrow_color
-            if self.button_background_color not in (None, COLOR_SYSTEM_DEFAULT):
+            if self.button_background_color is not None:
                 config_dict['background'] = self.button_background_color
             if self.read_only is True:
-                if self._text_color not in (None, COLOR_SYSTEM_DEFAULT):
+                if self._text_color is not None:
                     config_dict['selectforeground'] = self._text_color
-                if self.background_color not in (None, COLOR_SYSTEM_DEFAULT):
+                if self.background_color is not None:
                     config_dict['selectbackground'] = self.background_color
         except Exception as e:
             _error_popup_with_traceback(f"Combo Element error {e}",
@@ -3261,7 +3262,7 @@ class Combo(_InputElementReadonlyable[ttk.Combobox]):
 
         # make tcl call to deal with colors for the drop-down formatting
         try:
-            if self.background_color not in (None, COLOR_SYSTEM_DEFAULT) and self._text_color not in (None, COLOR_SYSTEM_DEFAULT):
+            if self.background_color is not None and self._text_color is not None:
                 self._widget.tk.eval(
                     f"[ttk::combobox::PopdownWindow {self._widget}].f.l configure -foreground {self._text_color} -background {self.background_color} -selectforeground {self.background_color} -selectbackground {self._text_color}"
                 )
@@ -3413,9 +3414,9 @@ class OptionMenu(_InputElement[tk.OptionMenu]):
 
         menu: tk.Menu = self._widget['menu']
         menu.config(font=self.font)
-        if self.background_color not in {None, COLOR_SYSTEM_DEFAULT}:
+        if self.background_color is not None:
             menu.config(background=self.background_color)
-        if self._text_color not in {None, COLOR_SYSTEM_DEFAULT}:
+        if self._text_color is not None:
             menu.config(fg=self._text_color)
 
     @override
@@ -3441,7 +3442,7 @@ class Listbox(_InputElement[tk.Listbox]):
     SELECT_MODE_SINGLE = tk.SINGLE
     _SELECT_MODES = (SELECT_MODE_MULTIPLE, SELECT_MODE_BROWSE, SELECT_MODE_EXTENDED, SELECT_MODE_SINGLE)
 
-    def __init__(self, values, *, default_values=None, select_mode=None,
+    def __init__(self, values, *, default_values=None, select_mode=SELECT_MODE_SINGLE,
                  bind_return_key=False, disabled=False, no_scrollbar=False, horizontal_scroll=False,
                  highlight_background_color=None, highlight_text_color=None, **kwargs):
         """
@@ -3474,7 +3475,6 @@ class Listbox(_InputElement[tk.Listbox]):
         if select_mode not in Listbox._SELECT_MODES:
             err_msg = f'Invalid select_mode for Listbox (was {select_mode}). Has to be one of the following: Listbox.SELECT_MODE_MULTIPLE, Listbox.SELECT_MODE_BROWSE, Listbox.SELECT_MODE_EXTENDED, Listbox.SELECT_MODE_SINGLE.'
             raise AttributeError(err_msg)
-            self.select_mode = DEFAULT_LISTBOX_SELECT_MODE
         self.highlight_background_color = highlight_background_color if highlight_background_color is not None else self.text_color
         self.highlight_text_color = highlight_text_color if highlight_text_color is not None else self.background_color
         self.vsb = None
@@ -3670,9 +3670,9 @@ class Listbox(_InputElement[tk.Listbox]):
     
     @override
     def _modify_config_dict(self, config_dict):
-        if self.highlight_background_color not in {None, COLOR_SYSTEM_DEFAULT}:
+        if self.highlight_background_color is not None:
             config_dict['selectbackground'] = self.highlight_background_color
-        if self.highlight_text_color not in {None, COLOR_SYSTEM_DEFAULT}:
+        if self.highlight_text_color is not None:
             config_dict['selectforeground'] = self.highlight_text_color
         
     @override
@@ -3843,18 +3843,18 @@ class Radio(Element[tk.Radiobutton]):
         if text is not None:
             self.text = str(text)
             self._widget.configure(text=self.text)
-        if background_color not in (None, COLOR_SYSTEM_DEFAULT):
+        if background_color is not None:
             self._background_color = background_color
             self._widget.configure(background=self.background_color)
-        if text_color not in (None, COLOR_SYSTEM_DEFAULT):
+        if text_color is not None:
             self._widget.configure(fg=text_color)
             self._text_color = text_color
 
-        if circle_color not in (None, COLOR_SYSTEM_DEFAULT):
+        if circle_color is not None:
             self.circle_background_color = circle_color
             self._widget.configure(selectcolor=self.circle_background_color)  # The background of the radio button
         elif text_color or background_color:
-            if self.text_color not in (None, COLOR_SYSTEM_DEFAULT) and self._background_color not in (None, COLOR_SYSTEM_DEFAULT) and self.text_color.startswith(
+            if self.text_color is not None and self._background_color is not None and self.text_color.startswith(
                     '#') and self._background_color.startswith('#'):
                 # ---- compute color of circle background ---
                 text_hsl = _hex_to_hsl(self.text_color)
@@ -3938,16 +3938,16 @@ class Radio(Element[tk.Radiobutton]):
 
         if self.enable_events:
             res['command'] = self._generic_tkinter_callback_handler
-        if self.background_color not in {None, COLOR_SYSTEM_DEFAULT}:
+        if self.background_color is not None:
             res['background'] = self.background_color
             res['selectcolor'] = self.circle_background_color
             res['activebackground'] = self.background_color
-        if self.text_color not in {None, COLOR_SYSTEM_DEFAULT}:
+        if self.text_color is not None:
             res['fg'] = self.text_color
             res['activeforeground'] = self.text_color
-        if self.background_color != COLOR_SYSTEM_DEFAULT:
+        if self.background_color is not None:
             res['highlightbackground'] = self.background_color
-        if self._text_color != COLOR_SYSTEM_DEFAULT:
+        if self._text_color is not None:
             res['highlightcolor'] = self._text_color
 
         res['highlightthickness'] = 1
@@ -4061,14 +4061,14 @@ class Checkbox(Element[tk.Checkbutton]):
         if text is not None:
             self.text = str(text)
             self._widget.configure(text=self.text)
-        if background_color not in (None, COLOR_SYSTEM_DEFAULT):
+        if background_color is not None:
             self._background_color = background_color
             self._widget.configure(background=self.background_color)
-        if text_color not in (None, COLOR_SYSTEM_DEFAULT):
+        if text_color is not None:
             self._widget.configure(fg=text_color)
             self._text_color = text_color
         # Color the checkbox itself
-        if checkbox_color not in (None, COLOR_SYSTEM_DEFAULT):
+        if checkbox_color is not None:
             self.checkbox_background_color = checkbox_color
             self._widget.configure(selectcolor=self.checkbox_background_color)  # The background of the checkbox
         elif text_color or background_color:
@@ -4120,16 +4120,16 @@ class Checkbox(Element[tk.Checkbutton]):
     def _modify_config_dict(self, config_dict):
         if self.enable_events:
             config_dict['command'] = self._generic_tkinter_callback_handler
-        if self.background_color is not None and self.background_color != COLOR_SYSTEM_DEFAULT:
+        if self.background_color is not None:
             config_dict['selectcolor'] = self.checkbox_background_color  # The background of the checkbox
             config_dict['activebackground'] = self.background_color
-        if self.text_color not in {None, COLOR_SYSTEM_DEFAULT}:
+        if self.text_color is not None:
             config_dict['activeforeground'] = self._text_color
 
         config_dict['highlightthickness'] = self.highlight_thickness
-        if self.background_color != COLOR_SYSTEM_DEFAULT:
+        if self.background_color is not None:
             config_dict['highlightbackground'] = self.background_color
-        if self._text_color != COLOR_SYSTEM_DEFAULT:
+        if self._text_color is not None:
             config_dict['highlightcolor'] = self._text_color
 
 # ---------------------------------------------------------------------- #
@@ -4309,7 +4309,7 @@ class Spin(_InputElement[tk.Spinbox]):
         config_dict['font'] = self.font
         if self.button_background_color is not None:
             config_dict['buttonbackground'] = self.button_background_color
-        if self.text_color not in (None, COLOR_SYSTEM_DEFAULT):
+        if self.text_color is not None:
             config_dict['insertbackground'] = self.text_color
         
         if self.wrap is True:
@@ -4709,14 +4709,14 @@ class Multiline(_InputElement[tk.Text]):
         elif self.wrap_lines is False:
             config_dict['wrap'] = 'none'
             
-        if self.text_color not in {None, COLOR_SYSTEM_DEFAULT}:
+        if self.text_color is not None:
             config_dict['selectbackground'] = self.text_color
             config_dict['insertbackground'] = self.text_color
-        if self.background_color not in {None, COLOR_SYSTEM_DEFAULT}:
+        if self.background_color is not None:
             config_dict['selectforeground'] = self.background_color
-        if self.selected_background_color not in {None, COLOR_SYSTEM_DEFAULT}:
+        if self.selected_background_color is not None:
             config_dict['selectbackground'] = self.selected_background_color
-        if self.selected_text_color not in {None, COLOR_SYSTEM_DEFAULT}:
+        if self.selected_text_color is not None:
             config_dict['selectforeground'] = self.selected_text_color
 
     @override
@@ -4845,9 +4845,9 @@ class Text(Element[tk.Text]):
         if value is not None:
             self.display_text = str(value)
             self.tk_string_var.set(str(value))
-        if background_color not in (None, COLOR_SYSTEM_DEFAULT):
+        if background_color is not None:
             self._widget.configure(background=background_color)
-        if text_color not in (None, COLOR_SYSTEM_DEFAULT):
+        if text_color is not None:
             self._widget.configure(fg=text_color)
         if font is not None:
             self._widget.configure(font=font)
@@ -5158,9 +5158,9 @@ class StatusBar(Element[tk.Label]):
             self.display_text = value
             stringvar = self.tk_string_var
             stringvar.set(value)
-        if background_color not in (None, COLOR_SYSTEM_DEFAULT):
+        if background_color is not None:
             self.tk_text.configure(background=background_color)
-        if text_color not in (None, COLOR_SYSTEM_DEFAULT):
+        if text_color is not None:
             self.tk_text.configure(fg=text_color)
         if font is not None:
             self.tk_text.configure(font=font)
@@ -5283,7 +5283,7 @@ class TKProgressBar:
         _change_ttk_theme(s, ttk_theme)
 
         # self.style_name = str(key) + str(TKProgressBar.uniqueness_counter) + "my.Horizontal.TProgressbar"
-        if bar_color != COLOR_SYSTEM_DEFAULT and bar_color[0] != COLOR_SYSTEM_DEFAULT:
+        if bar_color is not None and bar_color[0] is not None:
             s.configure(self.style_name, background=bar_color[0], troughcolor=bar_color[1],
                         troughrelief=relief, borderwidth=border_width, thickness=width)
         else:
@@ -5509,10 +5509,10 @@ class Button(Element[tk.Button | ttk.Button]):
         :return: Pair of colors. (Highlight, Highlight Background)
         :rtype:  (str, str)
         """
-        highlight_color = highlight_background = COLOR_SYSTEM_DEFAULT
-        if self.button_color != COLOR_SYSTEM_DEFAULT and theme_background_color() != COLOR_SYSTEM_DEFAULT:
+        highlight_color = highlight_background = None
+        if self.button_color is not None and theme_background_color() is not None:
             highlight_background = theme_background_color()
-        if self.button_color != COLOR_SYSTEM_DEFAULT and self.button_color[0] != COLOR_SYSTEM_DEFAULT:
+        if self.button_color is not None and self.button_color[0] is not None:
             if self.button_color[0] != theme_background_color():
                 highlight_color = self.button_color[0]
             else:
@@ -5787,7 +5787,7 @@ class Button(Element[tk.Button | ttk.Button]):
                     self._widget.config(underline=pos)
             self._widget.configure(text=btext)
             self.button_text = text
-        if button_color not in ((None, None), COLOR_SYSTEM_DEFAULT):
+        if button_color not in ((None, None), None, None):
             bc = button_color_to_tuple(button_color, self.button_color)
             # if isinstance(button_color, str):
             #     try:
@@ -5795,14 +5795,14 @@ class Button(Element[tk.Button | ttk.Button]):
             #     except Exception as e:
             #         print('** Error in formatting your button color **', button_color, e)
             if self.use_ttk_buttons:
-                if bc[0] not in (None, COLOR_SYSTEM_DEFAULT):
+                if bc[0] is not None:
                     button_style.configure(style_name, foreground=bc[0])
-                if bc[1] not in (None, COLOR_SYSTEM_DEFAULT):
+                if bc[1] is not None:
                     button_style.configure(style_name, background=bc[1])
             else:
-                if bc[0] not in (None, COLOR_SYSTEM_DEFAULT):
+                if bc[0] is not None:
                     self._widget.config(foreground=bc[0], activebackground=bc[0])
-                if bc[1] not in (None, COLOR_SYSTEM_DEFAULT):
+                if bc[1] is not None:
                     self._widget.config(background=bc[1], activeforeground=bc[1])
             self.button_color = bc
         if disabled is True:
@@ -5845,7 +5845,7 @@ class Button(Element[tk.Button | ttk.Button]):
             self._hide_and_save_layout_settings()
         elif visible is True:
             self._restore_layout_settings()
-        if disabled_button_color not in {(None, None), COLOR_SYSTEM_DEFAULT}:
+        if disabled_button_color not in {(None, None), None, None}:
             if not self.use_ttk_buttons:
                 self._widget['disabledforeground'] = disabled_button_color[0]
             else:
@@ -6001,27 +6001,27 @@ class Button(Element[tk.Button | ttk.Button]):
 
         width, height, bc = self._get_width_height_color()
 
-        if bc != (None, None) and COLOR_SYSTEM_DEFAULT not in bc:
+        if bc != (None, None) and None not in bc:
             config_dict['foreground'] = bc[0]
             config_dict['background'] = bc[1]
         else:
-            if bc[0] != COLOR_SYSTEM_DEFAULT:
+            if bc[0] is not None:
                 config_dict['foreground'] = bc[0]
-            if bc[1] != COLOR_SYSTEM_DEFAULT:
+            if bc[1] is not None:
                 config_dict['background'] = bc[1]
 
         if width != 0:
             wraplen = width * self._char_width_in_pixels(self.font) # width of widget in Pixels
             config_dict['wraplength'] = wraplen  # set wrap to width of widget
 
-        if self.mouse_over_colors[1] not in (COLOR_SYSTEM_DEFAULT, None):
+        if self.mouse_over_colors[1] is not None:
             map_dict['background'] = [('active', self.mouse_over_colors[1])]
-        if self.mouse_over_colors[0] not in (COLOR_SYSTEM_DEFAULT, None):
+        if self.mouse_over_colors[0] is not None:
             map_dict['foreground'] = [('active', self.mouse_over_colors[0])]
 
-        if self.disabled_button_color[0] not in (COLOR_SYSTEM_DEFAULT, None):
+        if self.disabled_button_color[0] is not None:
             map_dict['foreground'] = [('disabled', self.disabled_button_color[0])]
-        if self.disabled_button_color[1] not in (COLOR_SYSTEM_DEFAULT, None):
+        if self.disabled_button_color[1] is not None:
             map_dict['background'] = [('disabled', self.disabled_button_color[1])]
 
         if self.border_width == 0 and not running_mac:
@@ -6048,26 +6048,26 @@ class Button(Element[tk.Button | ttk.Button]):
         
         width, _, bc = self._get_width_height_color()
 
-        if bc != (None, None) and COLOR_SYSTEM_DEFAULT not in bc:
+        if bc != (None, None) and None not in bc:
             conf_dict['foreground'] = bc[0]
             conf_dict['background'] = bc[1]
         else:
-            if bc[0] != COLOR_SYSTEM_DEFAULT:
+            if bc[0] != None:
                 conf_dict['foreground'] = bc[0]
-            if bc[1] != COLOR_SYSTEM_DEFAULT:
+            if bc[1] != None:
                 conf_dict['background'] = bc[1]
 
         if width != 0:
             wraplen = width * self._char_width_in_pixels(self.font)
             conf_dict['wraplength'] = wraplen  # set wrap to width of widget
 
-        if self.mouse_over_colors[1] not in (COLOR_SYSTEM_DEFAULT, None):
+        if self.mouse_over_colors[1] is not None:
             conf_dict['activebackground'] = self.mouse_over_colors[1]
-        if self.mouse_over_colors[0] not in (COLOR_SYSTEM_DEFAULT, None):
+        if self.mouse_over_colors[0] is not None:
             conf_dict['activeforeground'] = self.mouse_over_colors[0]
-        if self.highlight_colors[1] != COLOR_SYSTEM_DEFAULT:
+        if self.highlight_colors[1] is not None:
             conf_dict['highlightbackground'] = self.highlight_colors[1]
-        if self.highlight_colors[0] != COLOR_SYSTEM_DEFAULT:
+        if self.highlight_colors[0] is not None:
             conf_dict['highlightcolor'] = self.highlight_colors[0]
             
         if self.border_width == 0 and not running_mac:
@@ -6076,7 +6076,7 @@ class Button(Element[tk.Button | ttk.Button]):
         if self.pad[0] == 0 or self.pad[1] == 0:
             conf_dict['highlightthickness'] = 0
 
-        if self.disabled_button_color[0] not in (None, COLOR_SYSTEM_DEFAULT):
+        if self.disabled_button_color[0] is not None:
             conf_dict['disabledforeground'] = self.disabled_button_color[0]
     
         return conf_dict
@@ -6158,7 +6158,7 @@ class ButtonMenu(Element[tk.Menubutton]):
         self.button_color = button_color_to_tuple(button_color)
         # self.TextColor = self.ButtonColor[0]
         # self.BackgroundColor = self.ButtonColor[1]
-        self.disabled_text_color = disabled_text_color if disabled_text_color is not None else COLOR_SYSTEM_DEFAULT
+        self.disabled_text_color = disabled_text_color or None
         self.item_font = item_font
         if image_source is not None:
             if isinstance(image_source, str):
@@ -6246,11 +6246,11 @@ class ButtonMenu(Element[tk.Menubutton]):
             self.menu_definition = copy.deepcopy(menu_definition)
             top_menu = self.tk_menu = tk.Menu(self._widget, tearoff=self.tearoff, font=self.item_font, tearoffcommand=self._tearoff_menu_callback)
 
-            if self._background_color not in (COLOR_SYSTEM_DEFAULT, None):
+            if self._background_color is not None:
                 top_menu.config(bg=self._background_color)
-            if self._text_color not in (COLOR_SYSTEM_DEFAULT, None):
+            if self._text_color is not None:
                 top_menu.config(fg=self._text_color)
-            if self.disabled_text_color not in (COLOR_SYSTEM_DEFAULT, None):
+            if self.disabled_text_color is not None:
                 top_menu.config(disabledforeground=self.disabled_text_color)
             if self.item_font is not None:
                 top_menu.config(font=self.item_font)
@@ -6300,11 +6300,11 @@ class ButtonMenu(Element[tk.Menubutton]):
             self._restore_layout_settings()
         if visible is not None:
             self._visible = visible
-        if button_color not in ((None, None), COLOR_SYSTEM_DEFAULT):
+        if button_color not in ((None, None), None, None):
             bc = button_color_to_tuple(button_color, self.button_color)
-            if bc[0] not in (None, COLOR_SYSTEM_DEFAULT):
+            if bc[0] is not None:
                 self._widget.config(foreground=bc[0], activeforeground=bc[0])
-            if bc[1] not in (None, COLOR_SYSTEM_DEFAULT):
+            if bc[1] is not None:
                 self._widget.config(background=bc[1], activebackground=bc[1])
             self.button_color = bc
         
@@ -6380,12 +6380,12 @@ class ButtonMenu(Element[tk.Menubutton]):
         else:
             bc = DEFAULTS.BUTTON_COLOR
         
-        if bc not in ((None, None), COLOR_SYSTEM_DEFAULT) and bc[1] != COLOR_SYSTEM_DEFAULT:
+        if bc not in ((None, None), None, None) and bc[1] is not None:
             conf_dict['foreground'] = bc[0]
             conf_dict['background'] = bc[1]
             conf_dict['activebackground'] = bc[0]
             conf_dict['activeforeground'] = bc[1]
-        elif bc[0] != COLOR_SYSTEM_DEFAULT:
+        elif bc[0] is not None:
             conf_dict['foreground'] = bc[0]
             conf_dict['activebackground'] = bc[0]
 
@@ -6430,13 +6430,13 @@ class ButtonMenu(Element[tk.Menubutton]):
 
         self.tk_menu = top_menu = tk.Menu(self._widget, tearoff=self.tearoff, font=self.item_font, tearoffcommand=self._tearoff_menu_callback)
 
-        if self.background_color not in (COLOR_SYSTEM_DEFAULT, None):
+        if self.background_color is not None:
             top_menu.config(bg=self.background_color)
             top_menu.config(activeforeground=self.background_color)
-        if self._text_color not in (COLOR_SYSTEM_DEFAULT, None):
+        if self._text_color is not None:
             top_menu.config(fg=self._text_color)
             top_menu.config(activebackground=self._text_color)
-        if self.disabled_text_color not in (COLOR_SYSTEM_DEFAULT, None):
+        if self.disabled_text_color is not None:
             top_menu.config(disabledforeground=self.disabled_text_color)
         if self.item_font is not None:
             top_menu.config(font=self.item_font)
@@ -6603,7 +6603,7 @@ class ProgressBar(Element):
         config_dict['thickness'] = self.size[1] if self.size_px == (None, None) else self.size_px[1]
 
         bar_color = DEFAULTS.PROGRESS_BAR_COLOR if self.bar_color != (None, None) else self.bar_color
-        if bar_color != COLOR_SYSTEM_DEFAULT and bar_color[0] != COLOR_SYSTEM_DEFAULT:
+        if bar_color is not None and bar_color[0] is not None:
             config_dict['background'] = bar_color[0]
             config_dict['troughcolor'] = bar_color[1]
 
@@ -6859,8 +6859,8 @@ class Image(Element[tk.Label]):
     
     @override
     def _modify_config_dict(self, config_dict):
-        config_dict.pop('foreground')
-        config_dict.pop('highlightthickness')
+        config_dict.pop('foreground', None)
+        config_dict.pop('highlightthickness', None)
         try:
             if self.filename is not None:
                 photo = tk.PhotoImage(file=self.filename)
@@ -6927,7 +6927,7 @@ class Canvas(Element[tk.Canvas]):
             _error_popup_with_traceback('Error in Canvas.update - The window was closed')
             return
 
-        if background_color not in (None, COLOR_SYSTEM_DEFAULT):
+        if background_color is not None:
             self._widget.configure(background=background_color)
         if visible is False:
             self._hide_and_save_layout_settings()
@@ -7422,7 +7422,7 @@ class Graph(Element[tk.Canvas]):
             _error_popup_with_traceback('Error in Graph.update - The window was closed')
             return
 
-        if background_color is not None and background_color != COLOR_SYSTEM_DEFAULT:
+        if background_color is not None:
             self._widget.configure(background=background_color)
 
         if visible is False:
@@ -7698,7 +7698,7 @@ class Graph(Element[tk.Canvas]):
     
     @override
     def _modify_config_dict(self, config_dict):
-        config_dict.pop('foreground')
+        config_dict.pop('foreground', None)
 
     @override
     def _post_pack(self):
@@ -7813,7 +7813,7 @@ class Frame(Container, Element[tk.Frame]):
             self._widget.config(width=self.size[0], height=self.size[1])
             self._widget.pack_propagate(0)
 
-        if self.background_color not in {COLOR_SYSTEM_DEFAULT, None}:
+        if self.background_color is not None:
             config_dict['highlightbackground'] = self.background_color
             config_dict['highlightcolor'] = self.background_color
         if self._title_font is not None:
@@ -7877,7 +7877,7 @@ class Separator(Element):
 
     @override
     def _get_style_dicts(self):
-        if self.text_color not in (None, COLOR_SYSTEM_DEFAULT):
+        if self.text_color is not None:
             return {'background': self.text_color}, {}
         return {}, {}
 
@@ -7939,7 +7939,7 @@ class Sizegrip(Element):
 
     @override
     def _get_style_dicts(self):
-        return {'background': self._toplevel_form.tk_root['bg'] if self.background_color == COLOR_SYSTEM_DEFAULT else self.background_color}, {}
+        return {'background': self._toplevel_form.tk_root['bg'] if self.background_color in (None, None) else self.background_color}, {}
     
     @override
     def _modify_pack_dict(self, pack_dict):
@@ -8086,7 +8086,7 @@ class Tab(Container, Element[tk.Frame]):
     
     @override
     def _get_default_configure_dict(self):
-        if self.background_color not in {COLOR_SYSTEM_DEFAULT, None}:
+        if self.background_color is not None:
             return {
                 'background': self.background_color,
                 'highlightbackground': self.background_color,
@@ -8326,7 +8326,7 @@ class TabGroup(Container, Element[ttk.Notebook]):
         tab_element.tab_id = self.tab_count
         tab_element.parent_form = self._toplevel_form
         self.tab_count += 1
-        if tab_element.background_color not in {None, COLOR_SYSTEM_DEFAULT}:
+        if tab_element.background_color is not None:
             tab_element._widget.configure(background=tab_element.background_color, highlightbackground=tab_element.background_color,
                                           highlightcolor=tab_element.background_color)
         if tab_element.border_width is not None:
@@ -8368,7 +8368,7 @@ class TabGroup(Container, Element[ttk.Notebook]):
         config_dict = {}
         map_dict = {}
 
-        if self.background_color is not None and self.background_color != COLOR_SYSTEM_DEFAULT:
+        if self.background_color is not None:
             config_dict['background'] = self.background_color
         if self.border_width is not None:
             config_dict['borderwidth'] = self.border_width
@@ -8389,17 +8389,17 @@ class TabGroup(Container, Element[ttk.Notebook]):
         config_dict = {}
         map_dict = {}
 
-        if self.selected_title_color is not None and self.selected_title_color != COLOR_SYSTEM_DEFAULT:
+        if self.selected_title_color is not None:
             map_dict['foreground'] = [("selected", self.selected_title_color)]
-        if self.selected_background_color is not None and self.selected_background_color != COLOR_SYSTEM_DEFAULT:
+        if self.selected_background_color is not None:
             map_dict['background'] = [("selected", self.selected_background_color)]
-        if self.tab_background_color is not None and self.tab_background_color != COLOR_SYSTEM_DEFAULT:
+        if self.tab_background_color is not None:
             config_dict['background'] = self.tab_background_color
-        if self._text_color is not None and self._text_color != COLOR_SYSTEM_DEFAULT:
+        if self._text_color is not None:
             config_dict['foreground'] = self._text_color
         if self.tab_border_width is not None:
             config_dict['borderwidth'] = self.tab_border_width       # if ever want to get rid of border around the TABS themselves
-        if self.focus_color not in (None, COLOR_SYSTEM_DEFAULT):
+        if self.focus_color is not None:
             config_dict['focuscolor'] = self.focus_color
 
         config_dict['font'] = self.font
@@ -8599,7 +8599,7 @@ class Slider(Element[tk.Scale]):
     def _modify_config_dict(self, config_dict):
         if self.enable_events:
             config_dict['command'] = self._slider_changed_handler
-        if self.trough_color != COLOR_SYSTEM_DEFAULT:
+        if self.trough_color is not None:
             config_dict['troughcolor'] = self.trough_color
         if self.disable_numeric_display:
             config_dict['showvalue'] = 0
@@ -8853,7 +8853,7 @@ class Column(Container, Element[tk.Frame]):
     def _get_default_configure_dict(self):
         config_dict = {}
         
-        if self.background_color not in (None, COLOR_SYSTEM_DEFAULT):
+        if self.background_color is not None:
             config_dict['background'] = self.background_color
             config_dict['borderwidth'] = 0
             config_dict['highlightthickness'] = 0
@@ -9001,7 +9001,7 @@ class Pane(Container, Element[tk.PanedWindow]):
         if self._size != (None, None):
             res['width'] = self._size[0]
             res['height'] = self._size[1]
-        if self.background_color not in {None, COLOR_SYSTEM_DEFAULT}:
+        if self.background_color is not None:
             res['background'] = self.background_color
 
         return res
@@ -9290,7 +9290,7 @@ class Menu(Element[tk.Menu]):
         :param tearoff:                   if True, then can tear the menu off from the window ans use as a floating window. Very cool effect
         :type tearoff:                    (bool)
         """
-        self.disabled_text_color = disabled_text_color if disabled_text_color is not None else COLOR_SYSTEM_DEFAULT
+        self.disabled_text_color = disabled_text_color if disabled_text_color is not None else None
         self.menu_definition = copy.deepcopy(menu_definition)
         self._widget = None
         self.menu_item_chosen = None
@@ -9349,11 +9349,11 @@ class Menu(Element[tk.Menu]):
             for menu_entry in self.menu_definition:
                 baritem = tk.Menu(menubar, tearoff=self.tearoff, tearoffcommand=self._tearoff_menu_callback)
 
-                if self.background_color not in (COLOR_SYSTEM_DEFAULT, None):
+                if self.background_color is not None:
                     baritem.config(bg=self.background_color)
-                if self.text_color not in (COLOR_SYSTEM_DEFAULT, None):
+                if self.text_color is not None:
                     baritem.config(fg=self.text_color)
-                if self.disabled_text_color not in (COLOR_SYSTEM_DEFAULT, None):
+                if self.disabled_text_color is not None:
                     baritem.config(disabledforeground=self.disabled_text_color)
                 if self._font is not None:
                     baritem.config(font=self._font)
@@ -9414,13 +9414,13 @@ class Menu(Element[tk.Menu]):
         #     self._font = self.font
         conf_dict['borderwidth'] = 0
         conf_dict['relief'] = 'flat'
-        if self.background_color not in (COLOR_SYSTEM_DEFAULT, None):
+        if self.background_color is not None:
             conf_dict['bg'] = self.background_color
             conf_dict['activeforeground'] = self.background_color
-        if self._text_color not in (COLOR_SYSTEM_DEFAULT, None):
+        if self._text_color is not None:
             conf_dict['fg'] = self._text_color
             conf_dict['activebackground'] = self._text_color
-        if self.disabled_text_color not in (COLOR_SYSTEM_DEFAULT, None):
+        if self.disabled_text_color is not None:
             conf_dict['disabledforeground'] = self.disabled_text_color
         conf_dict['borderwidth'] = 0
         conf_dict['relief'] = 'flat'
@@ -9433,13 +9433,13 @@ class Menu(Element[tk.Menu]):
     def _pre_pack(self):
         for menu_entry in self.menu_definition:
             baritem = tk.Menu(self._widget, tearoff=self.tearoff, tearoffcommand=self._tearoff_menu_callback)
-            if self.background_color not in (COLOR_SYSTEM_DEFAULT, None):
+            if self.background_color is not None:
                 baritem.config(bg=self.background_color)
                 baritem.config(activeforeground=self.background_color)
-            if self._text_color not in (COLOR_SYSTEM_DEFAULT, None):
+            if self._text_color is not None:
                 baritem.config(fg=self._text_color)
                 baritem.config(activebackground=self._text_color)
-            if self.disabled_text_color not in (COLOR_SYSTEM_DEFAULT, None):
+            if self.disabled_text_color is not None:
                 baritem.config(disabledforeground=self.disabled_text_color)
             if self.font is not None:
                 baritem.config(font=self.font)
@@ -9615,11 +9615,11 @@ class Table(Element[ttk.Treeview]):
         if values is not None:
             for t_id in self.tree_ids:
                 self._widget.item(t_id, tags=())
-                if self.background_color is not None and self.background_color != COLOR_SYSTEM_DEFAULT:
+                if self.background_color is not None:
                     self._widget.tag_configure(t_id, background=self.background_color)
                 else:
                     self._widget.tag_configure(t_id, background='#FFFFFF', foreground='#000000')
-                if self.text_color is not None and self.text_color != COLOR_SYSTEM_DEFAULT:
+                if self.text_color is not None:
                     self._widget.tag_configure(t_id, foreground=self.text_color)
                 else:
                     self._widget.tag_configure(t_id, foreground='#000000')
@@ -9635,7 +9635,7 @@ class Table(Element[ttk.Treeview]):
                 if self.display_row_numbers:
                     value = [i + self.starting_row_number, *value]
                 t_id = self._widget.insert('', 'end', text=value, iid=i + 1, values=value, tag=i)
-                if self.background_color is not None and self.background_color != COLOR_SYSTEM_DEFAULT:
+                if self.background_color is not None:
                     self._widget.tag_configure(t_id, background=self.background_color)
                 else:
                     self._widget.tag_configure(t_id, background='#FFFFFF')
@@ -9879,7 +9879,7 @@ class Table(Element[ttk.Treeview]):
                 value = [i + self.starting_row_number, *value]
             t_id = self._widget.insert('', tk.END, text=value, iid=i + 1, values=value, tag=i)
             self.tree_ids.append(t_id)
-        if self.alternating_row_color not in (None, COLOR_SYSTEM_DEFAULT):  # alternating colors
+        if self.alternating_row_color is not None:  # alternating colors
             for row in range(0, len(self.values), 2):
                 self._widget.tag_configure(row, background=self.alternating_row_color)
         if self.row_colors is not None:  # individual row colors
@@ -9894,12 +9894,12 @@ class Table(Element[ttk.Treeview]):
         config_dict = {}
         map_dict = {}
 
-        if self.background_color is not None and self.background_color != COLOR_SYSTEM_DEFAULT:
+        if self.background_color is not None:
             config_dict['background'] = self.background_color
             config_dict['fieldbackground'] = self.background_color
             if self.selected_row_colors[1] is not None:
                 map_dict['background'] = _fixed_map(self, 'background', self.selected_row_colors)
-        if self._text_color is not None and self._text_color != COLOR_SYSTEM_DEFAULT:
+        if self._text_color is not None:
             config_dict['foreground'] = self._text_color
             if self.selected_row_colors[0] is not None:
                 map_dict['foreground'] = _fixed_map(self, 'foreground', self.selected_row_colors)
@@ -9922,9 +9922,9 @@ class Table(Element[ttk.Treeview]):
         config_dict = {}
         map_dict = {}
 
-        if self.header_text_color is not None and self.header_text_color != COLOR_SYSTEM_DEFAULT:
+        if self.header_text_color is not None:
             config_dict['foreground'] = self.header_text_color
-        if self.header_background_color is not None and self.header_background_color != COLOR_SYSTEM_DEFAULT:
+        if self.header_background_color is not None:
             config_dict['background'] = self.header_background_color
         if self.header_font is not None:
             config_dict['font'] = self.header_font
@@ -9935,7 +9935,7 @@ class Table(Element[ttk.Treeview]):
         if self.header_relief is not None:
             config_dict['relief'] = self.header_relief
 
-        if self.header_background_color not in  (None, COLOR_SYSTEM_DEFAULT) and  self.header_text_color not in  (None, COLOR_SYSTEM_DEFAULT):
+        if self.header_background_color is not None and self.header_text_color is not None:
             map_dict['background'] = [
                 ('pressed', '!focus', self.header_background_color),
                 ('active', self.header_text_color)
@@ -10342,12 +10342,12 @@ class Tree(Element[ttk.Treeview]):
         config_dict = {}
         map_dict = {}
         
-        if self.background_color is not None and self.background_color != COLOR_SYSTEM_DEFAULT:
+        if self.background_color is not None:
             config_dict['background'] = self.background_color
             config_dict['fieldbackground'] = self.background_color
             if self.selected_row_colors[1] is not None:
                 map_dict['background'] = _fixed_map(self, 'background', self.selected_row_colors)
-        if self._text_color is not None and self._text_color != COLOR_SYSTEM_DEFAULT:
+        if self._text_color is not None:
             config_dict['foreground'] = self._text_color
             if self.selected_row_colors[0] is not None:
                 map_dict['foreground'] = _fixed_map(self, 'foreground', self.selected_row_colors)
@@ -10371,9 +10371,9 @@ class Tree(Element[ttk.Treeview]):
         config_dict = {}
         map_dict = {}
                 
-        if self.header_text_color is not None and self.header_text_color != COLOR_SYSTEM_DEFAULT:
+        if self.header_text_color is not None:
             config_dict['foreground'] = self.header_text_color
-        if self.header_background_color is not None and self.header_background_color != COLOR_SYSTEM_DEFAULT:
+        if self.header_background_color is not None:
             config_dict['background'] = self.header_background_color
         if self.header_font is not None:
             config_dict['font'] = self.header_font
@@ -11011,7 +11011,7 @@ class Window(Container):
         self.maximized = False
         self.right_click_menu_background_color = right_click_menu_background_color if right_click_menu_background_color is not None else theme_input_element_background_color()
         self.right_click_menu_text_color = right_click_menu_text_color if right_click_menu_text_color is not None else theme_input_text_color()
-        self.right_click_menu_disabled_text_color = right_click_menu_disabled_text_color if right_click_menu_disabled_text_color is not None else COLOR_SYSTEM_DEFAULT
+        self.right_click_menu_disabled_text_color = right_click_menu_disabled_text_color if right_click_menu_disabled_text_color is not None else None
         self.right_click_menu_font = right_click_menu_font if right_click_menu_font is not None else self._font
         self.right_click_menu_tearoff = right_click_menu_tearoff
         self.auto_close_timer_needs_starting = False
@@ -15097,8 +15097,8 @@ def button_color_to_tuple(color_tuple_or_string, default=(None, None)):
     """
     if default == (None, None):
         color_tuple = _simplified_dual_color_to_tuple(color_tuple_or_string, default=theme_button_color())
-    elif color_tuple_or_string == COLOR_SYSTEM_DEFAULT:
-        color_tuple = (COLOR_SYSTEM_DEFAULT, COLOR_SYSTEM_DEFAULT)
+    elif color_tuple_or_string in (None, None):
+        color_tuple = (None, None)
     else:
         color_tuple = _simplified_dual_color_to_tuple(color_tuple_or_string, default=default)
 
@@ -15120,9 +15120,9 @@ def _simplified_dual_color_to_tuple(color_tuple_or_string, default=(None, None))
     """
     if color_tuple_or_string is None or color_tuple_or_string == (None, None):
         color_tuple_or_string = default
-    if color_tuple_or_string == COLOR_SYSTEM_DEFAULT:
-        return (COLOR_SYSTEM_DEFAULT, COLOR_SYSTEM_DEFAULT)
-    text_color = background_color = COLOR_SYSTEM_DEFAULT
+    if color_tuple_or_string in (None, None):
+        return (None, None)
+    text_color = background_color = None
     try:
         if isinstance(color_tuple_or_string, (tuple, list)):
             if len(color_tuple_or_string) >= 2:
@@ -15328,7 +15328,7 @@ def _add_menu_item(*, top_menu:tk.Menu, sub_menu_info, element, is_sub_menu=Fals
                 }
                 if element.item_font is not None:
                     cnf['font'] = element.item_font
-            cnf = {key: val for key, val in cnf.items() if key not in (COLOR_SYSTEM_DEFAULT, None)}
+            cnf = {key: val for key, val in cnf.items() if val is not None}
             new_menu = tk.Menu(top_menu, cnf=cnf, tearoff=element.tearoff)
             pos = item.find(Menu.SHORTCUT_CHARACTER)
             if pos != -1:
@@ -15409,18 +15409,18 @@ def _add_right_click_menu(element, toplevel_form):
         menu = element.right_click_menu or toplevel_form.right_click_menu
         top_menu = tk.Menu(toplevel_form.tk_root, tearoff=toplevel_form.right_click_menu_tearoff, tearoffcommand=element._tearoff_menu_callback)
 
-        if toplevel_form.right_click_menu_background_color not in (COLOR_SYSTEM_DEFAULT, None):
+        if toplevel_form.right_click_menu_background_color is not None:
             top_menu.config(bg=toplevel_form.right_click_menu_background_color)
-        if toplevel_form.right_click_menu_text_color not in (COLOR_SYSTEM_DEFAULT, None):
+        if toplevel_form.right_click_menu_text_color is not None:
             top_menu.config(fg=toplevel_form.right_click_menu_text_color)
-        if toplevel_form.right_click_menu_disabled_text_color not in (COLOR_SYSTEM_DEFAULT, None):
+        if toplevel_form.right_click_menu_disabled_text_color is not None:
             top_menu.config(disabledforeground=toplevel_form.right_click_menu_disabled_text_color)
         if toplevel_form.right_click_menu_font is not None:
             top_menu.config(font=toplevel_form.right_click_menu_font)
 
-        if toplevel_form.right_click_menu_selected_colors[0] not in (COLOR_SYSTEM_DEFAULT, None):
+        if toplevel_form.right_click_menu_selected_colors[0] is not None:
             top_menu.config(activeforeground=toplevel_form.right_click_menu_selected_colors[0])
-        if toplevel_form.right_click_menu_selected_colors[1] not in (COLOR_SYSTEM_DEFAULT, None):
+        if toplevel_form.right_click_menu_selected_colors[1] is not None:
             top_menu.config(activebackground=toplevel_form.right_click_menu_selected_colors[1])
         _add_menu_item(top_menu=top_menu, sub_menu_info=menu[1], element=element, right_click_menu=True)
         element.tk_right_click_menu = top_menu
@@ -15545,27 +15545,27 @@ def _make_ttk_scrollbar(element, orientation, window):
         scroll_width = element.scroll_width
 
 
-    if trough_color not in (None, COLOR_SYSTEM_DEFAULT):
+    if trough_color is not None:
         style.configure(style_name, troughcolor=trough_color)
 
-    if frame_color not in (None, COLOR_SYSTEM_DEFAULT):
+    if frame_color is not None:
         style.configure(style_name, framecolor=frame_color)
-    if frame_color not in (None, COLOR_SYSTEM_DEFAULT):
+    if frame_color is not None:
         style.configure(style_name, bordercolor=frame_color)
 
-    if (background_color not in (None, COLOR_SYSTEM_DEFAULT)) and \
-        (arrow_color not in (None, COLOR_SYSTEM_DEFAULT)):
+    if (background_color is not None) and \
+        (arrow_color is not None):
         style.map(style_name, background=[("selected", background_color), ('active', arrow_color), ('background', background_color), ('!focus', background_color)])
-    if (background_color not in (None, COLOR_SYSTEM_DEFAULT)) and \
-        (arrow_color not in (None, COLOR_SYSTEM_DEFAULT)):
+    if (background_color is not None) and \
+        (arrow_color is not None):
         style.map(style_name, arrowcolor=[("selected", arrow_color), ('active', background_color), ('background', background_color),('!focus', arrow_color)])
 
-    if scroll_width not in (None, COLOR_SYSTEM_DEFAULT):
+    if scroll_width is not None:
         style.configure(style_name, width=scroll_width)
-    if arrow_width not in (None, COLOR_SYSTEM_DEFAULT):
+    if arrow_width is not None:
         style.configure(style_name, arrowsize=arrow_width)
 
-    if scroll_relief not in (None, COLOR_SYSTEM_DEFAULT):
+    if scroll_relief is not None:
         style.configure(style_name, relief=scroll_relief)
 
 # if __name__ == '__main__':
@@ -15745,7 +15745,7 @@ def _startup_tk(window: Window):
             print('*** Exception setting alpha channel to zero while creating window ***', e)
 
 
-    if window.background_color is not None and window.background_color != COLOR_SYSTEM_DEFAULT:
+    if window.background_color is not None:
         root.configure(background=window.background_color)
     Window._increment_open_count()
 
@@ -16821,8 +16821,8 @@ def set_options(*, icon=None, button_color=None, element_size=(None, None), butt
         # _my_windows._user_defined_icon = icon
 
     if button_color is not None:
-        if button_color == COLOR_SYSTEM_DEFAULT:
-            DEFAULTS.BUTTON_COLOR = (COLOR_SYSTEM_DEFAULT, COLOR_SYSTEM_DEFAULT)
+        if button_color in (None, None):
+            DEFAULTS.BUTTON_COLOR = (None, None)
         else:
             DEFAULTS.BUTTON_COLOR = button_color
 
@@ -17054,14 +17054,14 @@ def set_options(*, icon=None, button_color=None, element_size=(None, None), butt
 # of the elements.                                           #
 ##############################################################
 LOOK_AND_FEEL_TABLE = {
-    "SystemDefault": {"BACKGROUND": COLOR_SYSTEM_DEFAULT, "TEXT": COLOR_SYSTEM_DEFAULT, "INPUT": COLOR_SYSTEM_DEFAULT, "TEXT_INPUT": COLOR_SYSTEM_DEFAULT,
-                      "SCROLL": COLOR_SYSTEM_DEFAULT, "BUTTON": OFFICIAL_PYSIMPLEGUI_BUTTON_COLOR, "PROGRESS": COLOR_SYSTEM_DEFAULT, "BORDER": 1,
+    "SystemDefault": {"BACKGROUND": None, "TEXT": None, "INPUT": None, "TEXT_INPUT": None,
+                      "SCROLL": None, "BUTTON": OFFICIAL_PYSIMPLEGUI_BUTTON_COLOR, "PROGRESS": None, "BORDER": 1,
                       "SLIDER_DEPTH": 1, "PROGRESS_DEPTH": 0},
-    "SystemDefaultForReal": {"BACKGROUND": COLOR_SYSTEM_DEFAULT, "TEXT": COLOR_SYSTEM_DEFAULT, "INPUT": COLOR_SYSTEM_DEFAULT,
-                             "TEXT_INPUT": COLOR_SYSTEM_DEFAULT, "SCROLL": COLOR_SYSTEM_DEFAULT, "BUTTON": COLOR_SYSTEM_DEFAULT,
-                             "PROGRESS": COLOR_SYSTEM_DEFAULT, "BORDER": 1, "SLIDER_DEPTH": 1, "PROGRESS_DEPTH": 0},
-    "SystemDefault1": {"BACKGROUND": COLOR_SYSTEM_DEFAULT, "TEXT": COLOR_SYSTEM_DEFAULT, "INPUT": COLOR_SYSTEM_DEFAULT, "TEXT_INPUT": COLOR_SYSTEM_DEFAULT,
-                       "SCROLL": COLOR_SYSTEM_DEFAULT, "BUTTON": COLOR_SYSTEM_DEFAULT, "PROGRESS": COLOR_SYSTEM_DEFAULT, "BORDER": 1, "SLIDER_DEPTH": 1,
+    "SystemDefaultForReal": {"BACKGROUND": None, "TEXT": None, "INPUT": None,
+                             "TEXT_INPUT": None, "SCROLL": None, "BUTTON": None,
+                             "PROGRESS": None, "BORDER": 1, "SLIDER_DEPTH": 1, "PROGRESS_DEPTH": 0},
+    "SystemDefault1": {"BACKGROUND": None, "TEXT": None, "INPUT": None, "TEXT_INPUT": None,
+                       "SCROLL": None, "BUTTON": None, "PROGRESS": None, "BORDER": 1, "SLIDER_DEPTH": 1,
                        "PROGRESS_DEPTH": 0},
     "Material1": {"BACKGROUND": "#E3F2FD", "TEXT": "#000000", "INPUT": "#86A8FF", "TEXT_INPUT": "#000000", "SCROLL": "#86A8FF",
                   "BUTTON": ("#FFFFFF", "#5079D3"), "PROGRESS": DEFAULTS.PROGRESS_BAR_COMPUTE, "BORDER": 0, "SLIDER_DEPTH": 0, "PROGRESS_DEPTH": 0,
@@ -17122,17 +17122,17 @@ LOOK_AND_FEEL_TABLE = {
                    "BUTTON": ("#FFFFFF", "#046380"), "PROGRESS": DEFAULTS.PROGRESS_BAR_COMPUTE, "BORDER": 1, "SLIDER_DEPTH": 0, "PROGRESS_DEPTH": 0},
     "TealMono": {"BACKGROUND": "#a8cfdd", "TEXT": "#000000", "INPUT": "#dfedf2", "SCROLL": "#dfedf2", "TEXT_INPUT": "#000000", "BUTTON": ("#FFFFFF", "#183440"),
                  "PROGRESS": DEFAULTS.PROGRESS_BAR_COMPUTE, "BORDER": 1, "SLIDER_DEPTH": 0, "PROGRESS_DEPTH": 0},
-    "Default": {"BACKGROUND": COLOR_SYSTEM_DEFAULT, "TEXT": COLOR_SYSTEM_DEFAULT, "INPUT": COLOR_SYSTEM_DEFAULT, "TEXT_INPUT": COLOR_SYSTEM_DEFAULT,
-                "SCROLL": COLOR_SYSTEM_DEFAULT, "BUTTON": OFFICIAL_PYSIMPLEGUI_BUTTON_COLOR, "PROGRESS": COLOR_SYSTEM_DEFAULT, "BORDER": 1, "SLIDER_DEPTH": 1,
+    "Default": {"BACKGROUND": None, "TEXT": None, "INPUT": None, "TEXT_INPUT": None,
+                "SCROLL": None, "BUTTON": OFFICIAL_PYSIMPLEGUI_BUTTON_COLOR, "PROGRESS": None, "BORDER": 1, "SLIDER_DEPTH": 1,
                 "PROGRESS_DEPTH": 0},
-    "Default1": {"BACKGROUND": COLOR_SYSTEM_DEFAULT, "TEXT": COLOR_SYSTEM_DEFAULT, "INPUT": COLOR_SYSTEM_DEFAULT, "TEXT_INPUT": COLOR_SYSTEM_DEFAULT,
-                 "SCROLL": COLOR_SYSTEM_DEFAULT, "BUTTON": COLOR_SYSTEM_DEFAULT, "PROGRESS": COLOR_SYSTEM_DEFAULT, "BORDER": 1, "SLIDER_DEPTH": 1,
+    "Default1": {"BACKGROUND": None, "TEXT": None, "INPUT": None, "TEXT_INPUT": None,
+                 "SCROLL": None, "BUTTON": None, "PROGRESS": None, "BORDER": 1, "SLIDER_DEPTH": 1,
                  "PROGRESS_DEPTH": 0},
-    "DefaultNoMoreNagging": {"BACKGROUND": COLOR_SYSTEM_DEFAULT, "TEXT": COLOR_SYSTEM_DEFAULT, "INPUT": COLOR_SYSTEM_DEFAULT,
-                             "TEXT_INPUT": COLOR_SYSTEM_DEFAULT, "SCROLL": COLOR_SYSTEM_DEFAULT, "BUTTON": OFFICIAL_PYSIMPLEGUI_BUTTON_COLOR,
-                             "PROGRESS": COLOR_SYSTEM_DEFAULT, "BORDER": 1, "SLIDER_DEPTH": 1, "PROGRESS_DEPTH": 0},
-    "GrayGrayGray": {"BACKGROUND": COLOR_SYSTEM_DEFAULT, "TEXT": COLOR_SYSTEM_DEFAULT, "INPUT": COLOR_SYSTEM_DEFAULT, "TEXT_INPUT": COLOR_SYSTEM_DEFAULT,
-                     "SCROLL": COLOR_SYSTEM_DEFAULT, "BUTTON": COLOR_SYSTEM_DEFAULT, "PROGRESS": COLOR_SYSTEM_DEFAULT, "BORDER": 1, "SLIDER_DEPTH": 1,
+    "DefaultNoMoreNagging": {"BACKGROUND": None, "TEXT": None, "INPUT": None,
+                             "TEXT_INPUT": None, "SCROLL": None, "BUTTON": OFFICIAL_PYSIMPLEGUI_BUTTON_COLOR,
+                             "PROGRESS": None, "BORDER": 1, "SLIDER_DEPTH": 1, "PROGRESS_DEPTH": 0},
+    "GrayGrayGray": {"BACKGROUND": None, "TEXT": None, "INPUT": None, "TEXT_INPUT": None,
+                     "SCROLL": None, "BUTTON": None, "PROGRESS": None, "BORDER": 1, "SLIDER_DEPTH": 1,
                      "PROGRESS_DEPTH": 0},
     "LightBlue": {"BACKGROUND": "#E3F2FD", "TEXT": "#000000", "INPUT": "#86A8FF", "TEXT_INPUT": "#000000", "SCROLL": "#86A8FF",
                   "BUTTON": ("#FFFFFF", "#5079D3"), "PROGRESS": DEFAULTS.PROGRESS_BAR_COMPUTE, "BORDER": 0, "SLIDER_DEPTH": 0, "PROGRESS_DEPTH": 0,
@@ -17593,8 +17593,8 @@ def theme_button_color(color=None):
     :rtype:  (str, str)
     """
     if color is not None:
-        if color == COLOR_SYSTEM_DEFAULT:
-            color_tuple = (COLOR_SYSTEM_DEFAULT, COLOR_SYSTEM_DEFAULT)
+        if color in (None, None):
+            color_tuple = (None, None)
         else:
             color_tuple = button_color_to_tuple(color, (None, None))
         if color_tuple == (None, None):
@@ -17779,7 +17779,7 @@ def _theme_preview_window_swatches():
         theme(theme_name)
         colors = [theme_background_color(), theme_text_color(), theme_input_element_background_color(),
                   theme_input_text_color()]
-        if theme_button_color() != COLOR_SYSTEM_DEFAULT:
+        if theme_button_color() is not None:
             colors.append(theme_button_color()[0])
             colors.append(theme_button_color()[1])
         colors = list(set(colors))  # de-duplicate items
@@ -17788,7 +17788,7 @@ def _theme_preview_window_swatches():
             Text(SYMBOLS.SQUARE, text_color=color, background_color='black', pad=(0, 0), font='DEFAUlT 20', right_click_menu=['Nothing', [color]],
                              tooltip=color, enable_events=True, key=(i, color))
             for color in colors
-            if color != COLOR_SYSTEM_DEFAULT
+            if color is not None
         )
         layout += [row]
     # place layout inside of a Column so that it's scrollable
@@ -17861,7 +17861,7 @@ def change_look_and_feel(index, *, force=False):
         colors = LOOK_AND_FEEL_TABLE[selection]
 
         # Color the progress bar using button background and input colors...unless they're the same
-        if colors['PROGRESS'] != COLOR_SYSTEM_DEFAULT:
+        if colors['PROGRESS'] is not None:
             if colors['PROGRESS'] == DEFAULTS.PROGRESS_BAR_COMPUTE:
                 if colors['BUTTON'][1] != colors['INPUT'] and colors['BUTTON'][1] != colors['BACKGROUND']:
                     colors['PROGRESS'] = colors['BUTTON'][1], colors['INPUT']
@@ -18153,12 +18153,14 @@ def popup(*args, title=None, button_color=None, background_color=None, text_colo
         buttons = ['OK']
         widths = [5]
     elif button_text:
-        if not isinstance(button_text, (tuple, list)):
-            buttons = [button_text]
-            widths = [button_width or len(button_text)]
-        else:
+        if isinstance(button_text, (tuple, list)):
             buttons = button_text
             widths = [button_width or len(button) for button in buttons]
+        else:
+            buttons = [button_text]
+            widths = [button_width or len(button_text)]
+    else:
+        buttons = []
     
     if buttons:
         popup_button = DummyButton if non_blocking else Button # important to use or else button will close other windows too!
@@ -19284,17 +19286,17 @@ def popup_menu(window, element, menu_def, title=None, location=(None, None)):
 
     element._popup_menu_location = location
     top_menu = tk.Menu(window.tk_root, tearoff=True, tearoffcommand=element._tearoff_menu_callback)
-    if window.right_click_menu_background_color not in (COLOR_SYSTEM_DEFAULT, None):
+    if window.right_click_menu_background_color is not None:
         top_menu.config(bg=window.right_click_menu_background_color)
-    if window.right_click_menu_text_color not in (COLOR_SYSTEM_DEFAULT, None):
+    if window.right_click_menu_text_color is not None:
         top_menu.config(fg=window.right_click_menu_text_color)
-    if window.right_click_menu_disabled_text_color not in (COLOR_SYSTEM_DEFAULT, None):
+    if window.right_click_menu_disabled_text_color is not None:
         top_menu.config(disabledforeground=window.right_click_menu_disabled_text_color)
     if window.right_click_menu_font is not None:
         top_menu.config(font=window.right_click_menu_font)
-    if window.right_click_menu_selected_colors[0] != COLOR_SYSTEM_DEFAULT:
+    if window.right_click_menu_selected_colors[0] is not None:
         top_menu.config(activeforeground=window.right_click_menu_selected_colors[0])
-    if window.right_click_menu_selected_colors[1] != COLOR_SYSTEM_DEFAULT:
+    if window.right_click_menu_selected_colors[1] is not None:
         top_menu.config(activebackground=window.right_click_menu_selected_colors[1])
     top_menu.config(title=window.title if title is None else title)
     _add_menu_item(top_menu=top_menu, sub_menu_info=menu_def[1], element=element, right_click_menu=True)
