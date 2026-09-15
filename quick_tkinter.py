@@ -1069,6 +1069,8 @@ def _ensure_widget_created(*args, error_return=None):
 
     return decorator
 
+def _without_none_values(_dict:dict[str]) -> dict[str]:
+    return {kw: arg for kw, arg in _dict.items() if arg is not None}
 
 # ------------------------------------------------------------------------- #
 #                       Element CLASS                                       #
@@ -2135,11 +2137,8 @@ class Element[widget_type: tk.Widget](ABC):
 
     def _get_default_configure_dict(self):
         res = {}
-        if self.background_color is not None:
-            res['background'] = self.background_color
-        if self.text_color is not None:
-            res['foreground'] = self.text_color
-
+        res['background'] = self.background_color
+        res['foreground'] = self.text_color
         res['highlightthickness'] = 0
 
         return res
@@ -2188,7 +2187,7 @@ class Element[widget_type: tk.Widget](ABC):
             _change_ttk_theme(self.ttk_style, self._toplevel_form.ttk_theme)
 
             config_dict, map_dict = self._get_style_dicts()
-            self.ttk_style.configure(self.ttk_style_name, **config_dict)
+            self.ttk_style.configure(self.ttk_style_name, **_without_none_values(config_dict))
             self.ttk_style.map(self.ttk_style_name, **map_dict)
 
             style_name_suff, config_dict, map_dict = self._get_additional_style_dicts()
@@ -2951,18 +2950,9 @@ class Input(_InputElementReadonlyable[tk.Entry]):
 
     @override
     def _modify_config_dict(self, config_dict):
-        if self.selected_background_color is not None:
-            config_dict['selectbackground'] = self.selected_background_color
-        elif 'fg' in config_dict:
-            config_dict['selectbackground'] = self.text_color
-
-        if self.selected_text_color is not None:
-            config_dict['selectforeground'] = self.selected_text_color
-        elif 'background' in config_dict:
-            config_dict['selectforeground'] = self.background_color
-
-        if self.disabled_readonly_background_color is not None:
-            config_dict['readonlybackground'] = self.disabled_readonly_background_color
+        config_dict['selectbackground'] = self.selected_background_color or config_dict['foreground']
+        config_dict['selectforeground'] = self.selected_text_color or config_dict['background']
+        config_dict['readonlybackground'] = self.disabled_readonly_background_color
         if self._disabled_readonly_text_color is not None and self._disabled:
             config_dict['fg'] = self._disabled_readonly_text_color
 
@@ -3219,33 +3209,21 @@ class Combo(_InputElementReadonlyable[ttk.Combobox]):
 
     @override
     def _get_style_dicts(self):
-        config_dict = {}
-        map_dict = {}
-        try:
-            if self._text_color is not None:
-                config_dict['foreground'] = self._text_color
-                config_dict['selectbackground'] = self._text_color
-                config_dict['insertcolor'] = self._text_color
-                map_dict['fieldforeground'] = [('readonly', self._text_color)]
-            if self.background_color is not None:
-                config_dict['selectforeground'] = self.background_color
-                map_dict['fieldbackground'] = [('readonly', self.background_color)]
-                config_dict['fieldbackground'] = self.background_color
+        config_dict = {
+            'foreground': self._text_color,
+            'selectforeground': self._text_color if self.read_only is True else self.background_color,
+            'selectbackground': self.background_color if self.read_only is True else self._text_color,
+            'fieldbackground': self.background_color,
+            'insertcolor': self._text_color,
+            'arrowcolor': self.button_arrow_color,
+            'background': self.button_background_color
+        }
 
-            if self.button_arrow_color is not None:
-                config_dict['arrowcolor'] = self.button_arrow_color
-            if self.button_background_color is not None:
-                config_dict['background'] = self.button_background_color
-            if self.read_only is True:
-                if self._text_color is not None:
-                    config_dict['selectforeground'] = self._text_color
-                if self.background_color is not None:
-                    config_dict['selectbackground'] = self.background_color
-        except Exception as e:
-            _error_popup_with_traceback(f"Combo Element error {e}",
-                                        f"Combo element key: {self._key}",
-                                        "One of your colors is bad. Check the text, background, button background and button arrow colors",
-                                        f"Parent Window's Title: {self._toplevel_form.title}")
+        map_dict = {}
+        if self._text_color is not None:
+            map_dict['fieldforeground'] = [('readonly', self._text_color)]
+        if self.background_color is not None:
+            map_dict['fieldbackground'] = [('readonly', self.background_color)]
 
         return config_dict, map_dict
 
@@ -3670,10 +3648,8 @@ class Listbox(_InputElement[tk.Listbox]):
     
     @override
     def _modify_config_dict(self, config_dict):
-        if self.highlight_background_color is not None:
-            config_dict['selectbackground'] = self.highlight_background_color
-        if self.highlight_text_color is not None:
-            config_dict['selectforeground'] = self.highlight_text_color
+        config_dict['selectbackground'] = self.highlight_background_color
+        config_dict['selectforeground'] = self.highlight_text_color
         
     @override
     def _modify_pack_dict(self, pack_dict):
@@ -4120,17 +4096,13 @@ class Checkbox(Element[tk.Checkbutton]):
     def _modify_config_dict(self, config_dict):
         if self.enable_events:
             config_dict['command'] = self._generic_tkinter_callback_handler
-        if self.background_color is not None:
-            config_dict['selectcolor'] = self.checkbox_background_color  # The background of the checkbox
-            config_dict['activebackground'] = self.background_color
-        if self.text_color is not None:
-            config_dict['activeforeground'] = self._text_color
+        config_dict['selectcolor'] = self.checkbox_background_color  # The background of the checkbox
+        config_dict['activebackground'] = self.background_color
+        config_dict['activeforeground'] = self._text_color
 
         config_dict['highlightthickness'] = self.highlight_thickness
-        if self.background_color is not None:
-            config_dict['highlightbackground'] = self.background_color
-        if self._text_color is not None:
-            config_dict['highlightcolor'] = self._text_color
+        config_dict['highlightbackground'] = self.background_color
+        config_dict['highlightcolor'] = self._text_color
 
 # ---------------------------------------------------------------------- #
 #                           Spin                                         #
@@ -4307,10 +4279,8 @@ class Spin(_InputElement[tk.Spinbox]):
     @override
     def _modify_config_dict(self, config_dict):
         config_dict['font'] = self.font
-        if self.button_background_color is not None:
-            config_dict['buttonbackground'] = self.button_background_color
-        if self.text_color is not None:
-            config_dict['insertbackground'] = self.text_color
+        config_dict['buttonbackground'] = self.button_background_color
+        config_dict['insertbackground'] = self.text_color
         
         if self.wrap is True:
             config_dict['wrap'] = True
@@ -4709,15 +4679,11 @@ class Multiline(_InputElement[tk.Text]):
         elif self.wrap_lines is False:
             config_dict['wrap'] = 'none'
             
-        if self.text_color is not None:
-            config_dict['selectbackground'] = self.text_color
-            config_dict['insertbackground'] = self.text_color
-        if self.background_color is not None:
-            config_dict['selectforeground'] = self.background_color
-        if self.selected_background_color is not None:
-            config_dict['selectbackground'] = self.selected_background_color
-        if self.selected_text_color is not None:
-            config_dict['selectforeground'] = self.selected_text_color
+        config_dict['selectbackground'] = self.text_color
+        config_dict['insertbackground'] = self.text_color
+        config_dict['selectforeground'] = self.background_color
+        config_dict['selectbackground'] = self.selected_background_color
+        config_dict['selectforeground'] = self.selected_text_color
 
     @override
     def _set_default_binds(self):
@@ -5102,8 +5068,7 @@ class Text(Element[tk.Text]):
         config_dict['wraplen'] = wraplen  # set wrap to width of widget
         
         config_dict['anchor'] = self.tk_anchor
-        if self.relief is not None:
-            config_dict['relief'] = self.relief
+        config_dict['relief'] = self.relief
 
 
 # ---------------------------------------------------------------------- #
@@ -6602,7 +6567,7 @@ class ProgressBar(Element):
         config_dict['borderwidth'] = self.border_width
         config_dict['thickness'] = self.size[1] if self.size_px == (None, None) else self.size_px[1]
 
-        bar_color = DEFAULTS.PROGRESS_BAR_COLOR if self.bar_color != (None, None) else self.bar_color
+        bar_color = DEFAULTS.PROGRESS_BAR_COLOR if self.bar_color == (None, None) else self.bar_color
         if bar_color is not None and bar_color[0] is not None:
             config_dict['background'] = bar_color[0]
             config_dict['troughcolor'] = bar_color[1]
@@ -7813,19 +7778,12 @@ class Frame(Container, Element[tk.Frame]):
             self._widget.config(width=self.size[0], height=self.size[1])
             self._widget.pack_propagate(0)
 
-        if self.background_color is not None:
-            config_dict['highlightbackground'] = self.background_color
-            config_dict['highlightcolor'] = self.background_color
-        if self._title_font is not None:
-            config_dict['font'] = self._title_font
-        if self.title_location is not None:
-            config_dict['labelanchor'] = self.title_location
-        if self.border_width is not None:
-            config_dict['borderwidth'] = self.border_width
-        if self._title_color is not None:
-            config_dict['foreground'] = self._title_color
-        else:
-            config_dict.pop('foreground', None)
+        config_dict['highlightbackground'] = self.background_color
+        config_dict['highlightcolor'] = self.background_color
+        config_dict['font'] = self._title_font
+        config_dict['labelanchor'] = self.title_location
+        config_dict['borderwidth'] = self.border_width
+        config_dict['foreground'] = self._title_color
     
     @override
     def _modify_pack_dict(self, pack_dict):
@@ -7877,9 +7835,7 @@ class Separator(Element):
 
     @override
     def _get_style_dicts(self):
-        if self.text_color is not None:
-            return {'background': self.text_color}, {}
-        return {}, {}
+        return {'background': self.text_color}, {}
 
     @override
     def _modify_pack_dict(self, pack_dict):
@@ -7939,7 +7895,7 @@ class Sizegrip(Element):
 
     @override
     def _get_style_dicts(self):
-        return {'background': self._toplevel_form.tk_root['bg'] if self.background_color in (None, None) else self.background_color}, {}
+        return {'background': self._toplevel_form.tk_root['bg'] if self.background_color is None else self.background_color}, {}
     
     @override
     def _modify_pack_dict(self, pack_dict):
@@ -8365,24 +8321,19 @@ class TabGroup(Container, Element[ttk.Notebook]):
 
     @override
     def _get_style_dicts(self):
-        config_dict = {}
-        map_dict = {}
-
-        if self.background_color is not None:
-            config_dict['background'] = self.background_color
-        if self.border_width is not None:
-            config_dict['borderwidth'] = self.border_width
-        if self._size != (None, None):
-            config_dict['width'] = self.size[0]
-            config_dict['height'] = self.size[1]
-
-        if self.tab_location is not None:
-            position_dict = {'left': 'w', 'right': 'e', 'top': 'n', 'bottom': 's', 'lefttop': 'wn',
-                                'leftbottom': 'ws', 'righttop': 'en', 'rightbottom': 'es', 'bottomleft': 'sw',
-                                'bottomright': 'se', 'topleft': 'nw', 'topright': 'ne'}
-            config_dict['tabposition'] = position_dict.get(self.tab_location, 'n')
+        position_dict = {'left': 'w', 'right': 'e', 'top': 'n', 'bottom': 's', 'lefttop': 'wn',
+                            'leftbottom': 'ws', 'righttop': 'en', 'rightbottom': 'es', 'bottomleft': 'sw',
+                            'bottomright': 'se', 'topleft': 'nw', 'topright': 'ne'}
         
-        return config_dict, map_dict
+        config_dict = {
+            'background': self.background_color,
+            'borderwidth': self.border_width,
+            'width': self.size[0],
+            'height': self.size[1],
+            'tabposition': position_dict.get(self.tab_location)
+        }
+
+        return config_dict, {}
     
     @override
     def _get_additional_style_dicts(self):
@@ -8599,8 +8550,7 @@ class Slider(Element[tk.Scale]):
     def _modify_config_dict(self, config_dict):
         if self.enable_events:
             config_dict['command'] = self._slider_changed_handler
-        if self.trough_color is not None:
-            config_dict['troughcolor'] = self.trough_color
+        config_dict['troughcolor'] = self.trough_color
         if self.disable_numeric_display:
             config_dict['showvalue'] = 0
         
@@ -9891,29 +9841,24 @@ class Table(Element[ttk.Treeview]):
     
     @override
     def _get_style_dicts(self):
-        config_dict = {}
-        map_dict = {}
+        config_dict = {
+            'background': self.background_color,
+            'foreground': self._text_color,
+            'fieldbackground': self.background_color,
+            'rowheight': self.row_height or self._char_height_in_pixels(self.font),
+            'font': self.font,
+            'borderwidth': self.border_width
+        }
 
-        if self.background_color is not None:
-            config_dict['background'] = self.background_color
-            config_dict['fieldbackground'] = self.background_color
-            if self.selected_row_colors[1] is not None:
-                map_dict['background'] = _fixed_map(self, 'background', self.selected_row_colors)
-        if self._text_color is not None:
-            config_dict['foreground'] = self._text_color
-            if self.selected_row_colors[0] is not None:
-                map_dict['foreground'] = _fixed_map(self, 'foreground', self.selected_row_colors)
-        if self.row_height is not None:
-            config_dict['rowheight'] = self.row_height
-        else:
-            config_dict['rowheight'] = self._char_height_in_pixels(self.font)
+        map_dict = {}
+        if self.background_color is not None and self.selected_row_colors[1] is not None:
+            map_dict['background'] = _fixed_map(self, 'background', self.selected_row_colors)
+        if self._text_color is not None and self.selected_row_colors[0] is not None:
+            map_dict['foreground'] = _fixed_map(self, 'foreground', self.selected_row_colors)
         if tclversion_detailed == '8.6.9' and ENABLE_TREEVIEW_869_PATCH:
             # print('*** tk version 8.6.9 detected.... patching ttk treeview code ***')
             map_dict['foreground'] = _fixed_map(self, 'foreground', self.selected_row_colors)
             map_dict['background'] = _fixed_map(self, 'background', self.selected_row_colors)
-        config_dict['font'] = self.font
-        if self.border_width is not None:
-            config_dict['borderwidth'] = self.border_width
         
         return config_dict, map_dict
 
@@ -10339,30 +10284,25 @@ class Tree(Element[ttk.Treeview]):
 
     @override
     def _get_style_dicts(self):
-        config_dict = {}
-        map_dict = {}
+        config_dict = {
+            'background': self.background_color,
+            'font': self.font,
+            'fieldbackground': self.background_color,
+            'rowheight': self.row_height or self._char_height_in_pixels(self.font),
+            'borderwidth': self.border_width
+        }
         
-        if self.background_color is not None:
-            config_dict['background'] = self.background_color
-            config_dict['fieldbackground'] = self.background_color
-            if self.selected_row_colors[1] is not None:
-                map_dict['background'] = _fixed_map(self, 'background', self.selected_row_colors)
-        if self._text_color is not None:
-            config_dict['foreground'] = self._text_color
-            if self.selected_row_colors[0] is not None:
-                map_dict['foreground'] = _fixed_map(self, 'foreground', self.selected_row_colors)
+        map_dict = {}
+        if self.background_color is not None and self.selected_row_colors[1] is not None:
+            map_dict['background'] = _fixed_map(self, 'background', self.selected_row_colors)
+        config_dict['foreground'] = self._text_color
+        if self._text_color is not None and self.selected_row_colors[0] is not None:
+            map_dict['foreground'] = _fixed_map(self, 'foreground', self.selected_row_colors)
         
         if tclversion_detailed == '8.6.9' and ENABLE_TREEVIEW_869_PATCH:
             # print('*** tk version 8.6.9 detected.... patching ttk treeview code ***')
             map_dict['foreground'] = _fixed_map(self, 'foreground', self.selected_row_colors)
             map_dict['background'] = _fixed_map(self, 'background', self.selected_row_colors)
-        config_dict['font'] = self.font
-        if self.row_height:
-            config_dict['rowheight'] = self.row_height
-        else:
-            config_dict['rowheight'] = self._char_height_in_pixels(self.font)
-        if self.border_width is not None:
-            config_dict['borderwidth'] = self.border_width
 
         return config_dict, map_dict
 
