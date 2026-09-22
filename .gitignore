@@ -1,7 +1,7 @@
 *
 !.gitignore
 !readme.md
-!ruff.toml
+!*.toml
 !*.py
 *Copy.py
 *test.py
