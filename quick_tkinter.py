@@ -1441,7 +1441,7 @@ class Element[widget_type: tk.Widget](ABC):
 
         _exit_mainloop(self._toplevel_form)
 
-    def _generic_tkinter_callback_handler(self, event):
+    def _generic_tkinter_callback_handler(self, event=None):
         """
         Internal callback function for default callbacks.
 
@@ -1451,7 +1451,7 @@ class Element[widget_type: tk.Widget](ABC):
         """
         self._generic_callback_handler('')
 
-    def _keyboard_handler(self, event):
+    def _keyboard_handler(self, event=None):
         """
         Internal callback for when a key is pressed and return keyboard events was set for window.
 
@@ -2678,6 +2678,9 @@ class Container(ABCWholeMro):
     def _build_results(self):
         self._dictionary_key_counter = self.toplevel_form._dictionary_key_counter
 
+        if isinstance(self, Element):
+            super()._build_results()
+
         for element in self:
             if element._key is not None and WRITE_ONLY_KEY in str(element._key):
                 continue
@@ -2745,13 +2748,13 @@ class _InputElementReadonlyable[widget_type: tk.Widget](_InputElement[widget_typ
         super().__init__(**kwargs)
 
     def update_readonly(self, *, readonly:bool):
-        self.readonly = readonly
-        self.update_state()
+        self._readonly = readonly
+        self._update_state()
 
     @override
     def update_disabled(self, *, disabled:bool):
         self._disabled = disabled
-        self.update_state()
+        self._update_state()
 
     def _update_state(self):
         if self.disabled is True:
@@ -2762,7 +2765,7 @@ class _InputElementReadonlyable[widget_type: tk.Widget](_InputElement[widget_typ
                 state = 'disabled'
                 text_color = self.text_color
         elif self.disabled is False:
-            if self.readonly:
+            if self._readonly:
                 state = 'readonly'
                 text_color = self._disabled_readonly_text_color
             else:
@@ -2894,9 +2897,9 @@ class Input(_InputElementReadonlyable[tk.Entry]):
             self.password_character = password_char
 
         if readonly is not None:
-            self.update_readonly(readonly)
+            self.update_readonly(readonly=readonly)
         if disabled is not None:
-            self.update_disabled(disabled)
+            self.update_disabled(disabled=disabled)
         
     
     @property
@@ -6930,7 +6933,7 @@ class Canvas(Element[tk.Canvas]):
     def _create_widget(self):
         if self._widget is None:
             width, height = self.size
-            self._widget = tk.Canvas(self.tk_parent_frame, width=width, height=height, bd=self.border_depth)
+            self._widget = tk.Canvas(self.tk_parent_frame, width=width, height=height, bd=self.border_width)
         else:
             self._widget.master = self.tk_parent_frame
 
@@ -8311,7 +8314,10 @@ class TabGroup(Container, Element[ttk.Notebook]):
 
         if visible is not None:
             self._visible = visible
-    
+
+    @override
+    def _build_results(self):
+        return super()._build_results()
 
     @property
     def TKNotebook(self) -> ttk.Notebook:  # noqa: N802
